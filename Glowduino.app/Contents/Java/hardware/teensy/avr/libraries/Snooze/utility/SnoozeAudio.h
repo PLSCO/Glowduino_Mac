@@ -32,14 +32,27 @@
 #include "Arduino.h"
 #include "SnoozeBlock.h"
 
+/*
+ #define CORE_PIN58_CONFIG	PORTE_PCR0
+ #define CORE_PIN59_CONFIG	PORTE_PCR1
+ #define CORE_PIN60_CONFIG	PORTE_PCR2
+ #define CORE_PIN61_CONFIG	PORTE_PCR3
+ #define CORE_PIN62_CONFIG	PORTE_PCR4
+ #define CORE_PIN63_CONFIG	PORTE_PCR5
+ */
+
 class SnoozeAudio : public SnoozeBlock {
 private:
     virtual void disableDriver( void );
     virtual void enableDriver( void );
+    bool audioADC;
+    bool audioDAC;
 public:
-    SnoozeAudio( void )
+    SnoozeAudio( void ) : audioADC( false ), audioDAC( false )
     {
         isDriver = true;
     }
+    void usingADC( uint8_t ADC_pin );
+    void usingDAC( uint8_t DAC_pin );
 };
 #endif /* defined(SnoozeAudio_h) */

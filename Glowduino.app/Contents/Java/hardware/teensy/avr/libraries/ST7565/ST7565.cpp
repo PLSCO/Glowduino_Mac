@@ -37,7 +37,7 @@ uint8_t is_reversed = 0;
 const uint8_t pagemap[] = { 3, 2, 1, 0, 7, 6, 5, 4 };
 
 // a 5x7 font table
-extern uint8_t PROGMEM font[];
+extern const uint8_t PROGMEM font[];
 
 // the memory buffer for the LCD
 uint8_t st7565_buffer[1024] = { 
@@ -147,7 +147,7 @@ void ST7565::drawbitmap(uint8_t x, uint8_t y,
   updateBoundingBox(x, y, x+w, y+h);
 }
 
-void ST7565::drawstring(uint8_t x, uint8_t line, char *c) {
+void ST7565::drawstring(uint8_t x, uint8_t line, const char *c) {
   while (c[0] != 0) {
     drawchar(x, line, c[0]);
     c++;

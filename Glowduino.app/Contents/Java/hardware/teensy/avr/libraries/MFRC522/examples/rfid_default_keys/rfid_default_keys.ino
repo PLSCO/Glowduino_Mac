@@ -14,7 +14,7 @@
  * Typical pin layout used:
  * -----------------------------------------------------------------------------------------
  *             MFRC522      Arduino       Arduino   Arduino    Arduino          Arduino
- *             Reader/PCD   Uno           Mega      Nano v3    Leonardo/Micro   Pro Micro
+ *             Reader/PCD   Uno/101       Mega      Nano v3    Leonardo/Micro   Pro Micro
  * Signal      Pin          Pin           Pin       Pin        Pin              Pin
  * -----------------------------------------------------------------------------------------
  * RST/Reset   RST          9             5         D9         RESET/ICSP-5     RST
@@ -28,14 +28,14 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
-#define RST_PIN         9           // Configurable, see typical pin layout above
-#define SS_PIN          10          // Configurable, see typical pin layout above
+constexpr uint8_t RST_PIN = 9;     // Configurable, see typical pin layout above
+constexpr uint8_t SS_PIN = 10;     // Configurable, see typical pin layout above
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 
 // Number of known default keys (hard-coded)
 // NOTE: Synchronize the NR_KNOWN_KEYS define with the defaultKeys[] array
-#define NR_KNOWN_KEYS   8
+constexpr uint8_t NR_KNOWN_KEYS = 8;
 // Known keys, see: https://code.google.com/p/mfcuk/wiki/MifareClassicDefaultKeys
 byte knownKeys[NR_KNOWN_KEYS][MFRC522::MF_KEY_SIZE] =  {
     {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, // FF FF FF FF FF FF = factory default
@@ -82,6 +82,11 @@ boolean try_key(MFRC522::MIFARE_Key *key)
     byte block = 0;
     MFRC522::StatusCode status;
     
+    // http://arduino.stackexchange.com/a/14316
+    if ( ! mfrc522.PICC_IsNewCardPresent())
+        return false;
+    if ( ! mfrc522.PICC_ReadCardSerial())
+        return false;
     // Serial.println(F("Authenticating using key A..."));
     status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, key, &(mfrc522.uid));
     if (status != MFRC522::STATUS_OK) {

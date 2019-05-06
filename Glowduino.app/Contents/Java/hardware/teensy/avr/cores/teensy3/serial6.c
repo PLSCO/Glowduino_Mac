@@ -1,6 +1,6 @@
 /* Teensyduino Core Library
  * http://www.pjrc.com/teensy/
- * Copyright (c) 2013 PJRC.COM, LLC.
+ * Copyright (c) 2017 PJRC.COM, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -85,7 +85,7 @@ static volatile uint8_t rx_buffer_head = 0;
 static volatile uint8_t rx_buffer_tail = 0;
 #endif
 
-static uint8_t tx_pin_num = 34;
+static uint8_t tx_pin_num = 48;
 
 // UART0 and UART1 are clocked by F_CPU, UART2 is clocked by F_BUS
 // UART0 has 8 byte fifo, UART1 and UART2 have 1 byte buffer
@@ -105,6 +105,7 @@ void serial6_begin(uint32_t divisor)
 	transmitting = 0;
 	CORE_PIN47_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_PFE | PORT_PCR_MUX(3);
 	CORE_PIN48_CONFIG = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(3);
+	if (divisor < 32) divisor = 32;
 	UART5_BDH = (divisor >> 13) & 0x1F;
 	UART5_BDL = (divisor >> 5) & 0xFF;
 	UART5_C4 = divisor & 0x1F;
@@ -152,6 +153,8 @@ void serial6_end(void)
 	UART5_C2 = 0;
 	CORE_PIN47_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_MUX(1);
 	CORE_PIN48_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_MUX(1);
+	UART5_S1;
+	UART5_D; // clear leftover error status
 	rx_buffer_head = 0;
 	rx_buffer_tail = 0;
 	if (rts_pin) rts_deassert();
@@ -171,7 +174,7 @@ void serial6_set_tx(uint8_t pin, uint8_t opendrain)
 
 	if (opendrain) pin |= 128;
 	if (pin == tx_pin_num) return;
-	if ((SIM_SCGC4 & SIM_SCGC4_UART2)) {
+	if ((SIM_SCGC1 & SIM_SCGC1_UART5)) {
 		switch (tx_pin_num & 127) {
 			case 48:  CORE_PIN48_CONFIG = 0; break; // PTE24
 		}

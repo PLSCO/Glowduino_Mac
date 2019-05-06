@@ -54,9 +54,8 @@
  */
 
 #include <openGLCD.h>
-#include "openGLCD_Buildinfo.h"
-#include "include/glcd_io.h"
 #include "include/glcd_errno.h"
+#include "include/glcd_delay.h" // normal sketches don't need this.
 
 /*
  * Nasty kludges for @#@#@ AVR progmem CRAP
@@ -98,6 +97,7 @@
 #define MAX_ERRORS 10 // maximum errors per indivual test
 
 #ifdef _AVRIO_AVRIO_
+int avrpin2arduinopin(avrpin_t avriopin);
 void _SerialPrintPINstr(avrpin_t pin, const char *pinstr, uint8_t avrport,
 	 uint8_t avrbit);
 
@@ -112,7 +112,12 @@ void _SerialPrintPINstr(const char *pinstr);
 
 /*
  * Prototypes
+ * The IDE will screw up inserting prototypes if the return type is not on the
+ * same line as the rest of the function definition, so we will declare all
+ * the prototypes here to avoid any issues.
  */
+void setup();
+void loop();
 void showGLCDconfig(void);
 uint8_t lcdmemtest(void);
 uint16_t getglcdspeed();
@@ -122,6 +127,7 @@ int lcdhpagetest(uint8_t x1, uint8_t x2, uint8_t spage, uint8_t epage,
 	 uint8_t sval, uint8_t eval);
 int lcdvpagetest(uint8_t x1, uint8_t x2, uint8_t spage, uint8_t epage,
 	 uint8_t sval, uint8_t eval);
+void SerialPrintP(PGM_P str );
 
 /*
  * declare a string for a horizontal line in program memory
@@ -149,8 +155,7 @@ P(GLCDlibBuild) = GLCD_GLCDLIB_BUILD_BUILDSTR;
  *
  */
 
-void
-SerialPrintP(PGM_P str )
+void SerialPrintP(PGM_P str )
 {
   char c;
   PGM_P p = str;
@@ -397,7 +402,7 @@ int status;
       GLCD.print("Diag Loop:");
       GLCD.println(lcount);
       GLCD.print(lcount - lfcount);
-      GLCD.print(" PASSED");
+      GLCD.print(" PASSED ");
       GLCD.print(lfcount);
       GLCD.println(" FAILED");
 
@@ -845,7 +850,13 @@ showGLCDconfig(void)
 #ifdef ARDUINO
   SerialPrintP(hline);
   SerialPrintQ("Reported Arduino Revision: ");
-#if ARDUINO > 100
+#if ARDUINO > 158 // ARDUINO rev format changed after 1.5.8 to #.##.## (breaks after 3.x.x for 16 int bit calc)
+  Serial.print(ARDUINO/10000);
+  Serial.print('.');
+  Serial.print((ARDUINO%10000)/100);
+  Serial.print('.');
+  Serial.println((ARDUINO%10000)%100);
+#elif ARDUINO >= 100 // 1.0.0 to 1.5.8 uses rev format #.#.#
   Serial.print(ARDUINO/100);
   Serial.print('.');
   Serial.print((ARDUINO%100)/10);
@@ -962,7 +973,14 @@ showGLCDconfig(void)
   SerialPrintQ(" E2:");
   SerialPrintPINstr(glcdPinE2);
 #endif
-
+#ifdef glcdPinE3
+  SerialPrintQ(" E3:");
+  SerialPrintPINstr(glcdPinE3);
+#endif
+#ifdef glcdPinE4
+  SerialPrintQ(" E4:");
+  SerialPrintPINstr(glcdPinE4);
+#endif
   Serial.println();
 
 //  SerialPrintf(" D0:%s", GLCDdiagsPIN2STR(glcdPinData0));
@@ -997,6 +1015,7 @@ showGLCDconfig(void)
 //  SerialPrintf("Delays: tDDR:%d tAS:%d tDSW:%d tWH:%d tWL: %d\n",
 //  GLCD_tDDR, GLCD_tAS, GLCD_tDSW, GLCD_tWH, GLCD_tWL);
 
+#ifdef _delayNanoseconds
   SerialPrintQ("Delays: tDDR:");
   Serial.print(GLCD_tDDR);
   SerialPrintQ(" tAS:");
@@ -1007,6 +1026,9 @@ showGLCDconfig(void)
   Serial.print(GLCD_tWH);
   SerialPrintQ(" tWL:");
   Serial.println(GLCD_tWL);
+#else
+  SerialPrintQ("Delays: Using Arduino compatible delay functions\n");
+#endif
 
 
 #ifdef glcd_CHIP0
@@ -1132,9 +1154,11 @@ showGLCDconfig(void)
   SerialPrintQ("Backlight: ");
 #ifdef glcdPinBL
   SerialPrintPINstr(glcdPinBL);
-  SerialPrintQ(" BLctl:(");
-  SerialPrintQ(xstr(glcd_BLctl));
-  SerialPrintQ(")");
+  SerialPrintQ(" ActiveLevel: ");
+  if(glcd_BLactlevel)
+	SerialPrintQ("HIGH");
+  else
+	SerialPrintQ("LOW");
 #else
   SerialPrintQ("<Not configured>");
 #endif
@@ -1162,18 +1186,69 @@ showGLCDconfig(void)
   SerialPrintQ("UTF8 support enabled\n");
 #endif
 
+  /*
+   * show if NO_PRINTF
+   */
+#ifdef GLCDCFG_NO_PRINTF
+  SerialPrintQ("NO_PRINTF\n");
+#endif
+
+
+  /*
+   * show if NO_SCROLLDOWN
+   */
+#ifdef GLCDCFG_NO_SCROLLDOWN
+  SerialPrintQ("NO_SCROLLDOWN\n");
+#endif
+
+  /*
+   * show if NODEFER_SCROLL
+   */
+#ifdef GLCDCFG_NODEFER_SCROLL
+  SerialPrintQ("NODEFER_SCROLL\n");
+#endif
+
+
+  /*
+   * show if init selftest disabled
+   */
+#ifdef GLCDCFG_NOINIT_CHECKS
+  SerialPrintQ("NOINIT_CHECKS\n");
+#endif
+
+  /*
+   * show if forcing CORECODE mode
+   */
+#ifdef GLCDCFG_FORCE_CORECODE
+  SerialPrintQ("FORCE CORECODE mode\n");
+#endif
+
 
 }
 
 #ifdef _AVRIO_AVRIO_
+// figure out arduino pin from raw pin info
+
+int avrpin2arduinopin(avrpin_t avriopin)
+{
+
+	for(int pin = 0; pin < NUM_DIGITAL_PINS; pin++)
+	{
+		if(AVRIO_PIN2AVRPIN(pin) == avriopin)
+			return(pin);
+	}
+
+	return(0); // this should never happen
+}
+
+
 /*
  * The avrio version of the pin string also contain
  * the AVR port and bit number of the pin.
- * The format is PIN_Pb where P is the port A-Z 
+ * The format is AVRPIN_Pb where P is the port A-Z 
  * and b is the bit number within the port 0-7
  */
-void
-_SerialPrintPINstr(avrpin_t pin, const char *pinstr, uint8_t avrport, uint8_t avrbit)
+void _SerialPrintPINstr(avrpin_t pin, const char *pinstr, uint8_t avrport, uint8_t avrbit)
 {
 
   /*
@@ -1182,13 +1257,9 @@ _SerialPrintPINstr(avrpin_t pin, const char *pinstr, uint8_t avrport, uint8_t av
    */
   if(pin >= AVRIO_PIN(AVRIO_PORTA, 0))
   {
-    
 //  SerialPrintf("0x%x", pin);
-    /*
-     * print pin value in hex when AVRPIN #s are used
-     */
-    SerialPrintQ("0x");
-    Serial.print(pin,HEX);
+
+	Serial.print(avrpin2arduinopin(pin));
   }
   else
   {
@@ -1196,17 +1267,16 @@ _SerialPrintPINstr(avrpin_t pin, const char *pinstr, uint8_t avrport, uint8_t av
     Serial.print(pinstr);
   }
 
-//SerialPrintf("(PIN_%c%d)", pin, 'A'-AVRIO_PORTA+avrport, avrbit);
+//SerialPrintf("(AVRPIN_%c%d)", pin, 'A'-AVRIO_PORTA+avrport, avrbit);
 
-  SerialPrintQ("(PIN_");
+  SerialPrintQ("(PORT");
   Serial.print((char)('A' - AVRIO_PORTA+avrport));
   Serial.print((int)avrbit);
   Serial.print(')');
 
 }
 #else
-void
-_SerialPrintPINstr(const char *pinstr)
+void _SerialPrintPINstr(const char *pinstr)
 {
   Serial.print(pinstr);
 }
@@ -1219,46 +1289,44 @@ _SerialPrintPINstr(const char *pinstr)
  * i.e. return value is 1/10 the number of SetDot() calls
  * per second.
  */
-uint16_t
-getglcdspeed()
+uint16_t getglcdspeed()
 {
 uint16_t iter = 0;
 unsigned long startmillis;
 
-  startmillis = millis();
+	  startmillis = millis();
 
-  while(millis() - startmillis < 1000) // loop for 1 second
-  {
-    /*
-     * Do 10 operations to minimize the effects of the millis() call
-     * and the loop.
-     *
-     * Note: The pixel locations were chosen to ensure that a
-     * a set colum and set page operation are needed for each SetDot()
-     * call.
-     * The intent is to get an overall feel for the speed of the GLD
-     * as each SetDot() call will do these operations to the glcd:
-     * - set page
-     * - set column
-     * - read byte (dummy read)
-     * - read byte (real read)
-     * - set column (set column back for write)
-     * - write byte
-     */
+	  while(millis() - startmillis < 1000) // loop for 1 second
+	  {
+	    /*
+	     * Do 10 operations to minimize the effects of the millis() call
+	     * and the loop.
+	     *
+	     * Note: The pixel locations were chosen to ensure that a
+	     * a set colum and set page operation are needed for each SetDot()
+	     * call.
+	     * The intent is to get an overall feel for the speed of the GLD
+	     * as each SetDot() call will do these operations to the glcd:
+	     * - set page
+	     * - set column
+	     * - read byte (dummy read)
+	     * - read byte (real read)
+	     * - set column (set column back for write)
+	     * - write byte
+	     */
 
-    GLCD.SetDot(GLCD.Right, GLCD.Bottom, WHITE);
-    GLCD.SetDot(GLCD.Right-1, GLCD.Bottom-9, WHITE);
-    GLCD.SetDot(GLCD.Right, GLCD.Bottom, WHITE);
-    GLCD.SetDot(GLCD.Right-1, GLCD.Bottom-9, WHITE);
-    GLCD.SetDot(GLCD.Right, GLCD.Bottom, WHITE);
-    GLCD.SetDot(GLCD.Right-1, GLCD.Bottom-9, WHITE);
-    GLCD.SetDot(GLCD.Right, GLCD.Bottom, WHITE);
-    GLCD.SetDot(GLCD.Right-1, GLCD.Bottom-9, WHITE);
-    GLCD.SetDot(GLCD.Right, GLCD.Bottom, WHITE);
-    GLCD.SetDot(GLCD.Right-1, GLCD.Bottom-9, WHITE);
-    iter++;
-  }
+	    GLCD.SetDot(GLCD.Right, GLCD.Bottom, WHITE);
+	    GLCD.SetDot(GLCD.Right-1, GLCD.Bottom-9, WHITE);
+	    GLCD.SetDot(GLCD.Right, GLCD.Bottom, WHITE);
+	    GLCD.SetDot(GLCD.Right-1, GLCD.Bottom-9, WHITE);
+	    GLCD.SetDot(GLCD.Right, GLCD.Bottom, WHITE);
+	    GLCD.SetDot(GLCD.Right-1, GLCD.Bottom-9, WHITE);
+	    GLCD.SetDot(GLCD.Right, GLCD.Bottom, WHITE);
+	    GLCD.SetDot(GLCD.Right-1, GLCD.Bottom-9, WHITE);
+	    GLCD.SetDot(GLCD.Right, GLCD.Bottom, WHITE);
+	    GLCD.SetDot(GLCD.Right-1, GLCD.Bottom-9, WHITE);
+	    iter++;
+	  }
 
-  return(iter);
-
+	  return(iter);
 }

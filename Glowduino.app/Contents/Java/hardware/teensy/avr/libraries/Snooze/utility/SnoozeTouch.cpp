@@ -1,11 +1,10 @@
 /***********************************************************************************
- *  SnoozeTimer.h
+ *  SnoozeTouch.h
  *  Teensy 3.x/LC
  *
  * Purpose: Touch (TSI) Driver
  *
  ***********************************************************************************/
-#include "Arduino.h"
 #include "SnoozeTouch.h"
 #include "wake.h"
 
@@ -17,7 +16,7 @@
     #define TSI_PEN_LPSP(x)      (((uint32_t)(((uint32_t)(x))<<TSI_PEN_LPSP_SHIFT))&TSI_PEN_LPSP_MASK)
 #endif
 
-#if defined(__MK20DX256__)
+#if defined(__MK20DX256__) || defined(__MK20DX128__)
 static const uint8_t tsi_pins[] = {
     //0    1    2    3    4    5    6    7    8    9
     9,  10, 255, 255, 255, 255, 255, 255, 255, 255,
@@ -56,7 +55,7 @@ void SnoozeTouch::pinMode( int _pin, int thresh ) {
  *  <#Description#>
  *******************************************************************************/
 void SnoozeTouch::disableDriver( void ) {
-    if ( mode == RUN_LP || mode == VLPW || mode == RUN_LP ) return;
+    if ( mode == RUN_LP || mode == VLPW ) return;
     uint8_t _pin = pin;
     
 #if defined(HAS_KINETIS_TSI_LITE)

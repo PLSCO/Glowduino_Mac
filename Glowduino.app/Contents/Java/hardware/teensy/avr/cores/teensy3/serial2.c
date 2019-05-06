@@ -1,6 +1,6 @@
 /* Teensyduino Core Library
  * http://www.pjrc.com/teensy/
- * Copyright (c) 2013 PJRC.COM, LLC.
+ * Copyright (c) 2017 PJRC.COM, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -139,6 +139,7 @@ void serial2_begin(uint32_t divisor)
 	CORE_PIN10_CONFIG = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(3);
 #endif
 #if defined(HAS_KINETISK_UART1)
+	if (divisor < 32) divisor = 32;
 	UART1_BDH = (divisor >> 13) & 0x1F;
 	UART1_BDL = (divisor >> 5) & 0xFF;
 	UART1_C4 = divisor & 0x1F;
@@ -152,6 +153,7 @@ void serial2_begin(uint32_t divisor)
 	UART1_PFIFO = 0;
 #endif
 #elif defined(HAS_KINETISL_UART1)
+	if (divisor < 1) divisor = 1;
 	UART1_BDH = (divisor >> 8) & 0x1F;
 	UART1_BDL = divisor & 0xFF;
 	UART1_C1 = 0;
@@ -176,7 +178,7 @@ void serial2_format(uint32_t format)
 	c = UART1_C3 & ~0x10;
 	if (format & 0x20) c |= 0x10;		// tx invert
 	UART1_C3 = c;
-#ifdef SERIAL_9BIT_SUPPORT
+#if defined(SERIAL_9BIT_SUPPORT) && !defined(KINETISL)
 	c = UART1_C4 & 0x1F;
 	if (format & 0x08) c |= 0x20;		// 9 bit mode with parity (requires 10 bits)
 	UART1_C4 = c;
@@ -219,6 +221,8 @@ void serial2_end(void)
 	CORE_PIN9_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_MUX(1);  // PTC3
 	CORE_PIN10_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_MUX(1); // PTC4
 #endif
+	UART1_S1;
+	UART1_D; // clear leftover error status
 	rx_buffer_head = 0;
 	rx_buffer_tail = 0;
 	if (rts_pin) rts_deassert();
@@ -565,8 +569,11 @@ void uart1_status_isr(void)
 	}
 #else
 	if (UART1_S1 & UART_S1_RDRF) {
-		n = UART1_D;
-		if (use9Bits && (UART1_C3 & 0x80)) n |= 0x100;
+		if (use9Bits && (UART1_C3 & 0x80)) {
+			n = UART1_D | 0x100;
+		} else {
+			n = UART1_D;
+		}
 		head = rx_buffer_head + 1;
 		if (head >= SERIAL2_RX_BUFFER_SIZE) head = 0;
 		if (head != rx_buffer_tail) {

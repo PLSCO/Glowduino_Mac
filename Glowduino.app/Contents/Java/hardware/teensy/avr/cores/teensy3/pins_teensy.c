@@ -1,6 +1,6 @@
 /* Teensyduino Core Library
  * http://www.pjrc.com/teensy/
- * Copyright (c) 2013 PJRC.COM, LLC.
+ * Copyright (c) 2017 PJRC.COM, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -10,10 +10,10 @@
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
- * 1. The above copyright notice and this permission notice shall be 
+ * 1. The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
  *
- * 2. If the Software is incorporated into a build system that allows 
+ * 2. If the Software is incorporated into a build system that allows
  * selection among a list of target devices, then similar target
  * devices manufactured by PJRC.COM must be included in the list of
  * target devices and selectable in the same manner.
@@ -166,7 +166,7 @@ voidFuncPtr isr_table_portE[CORE_MAX_PIN_PORTE+1] = { [0 ... CORE_MAX_PIN_PORTE]
 
 // The Pin Config Register is used to look up the correct interrupt table
 // for the corresponding port.
-inline voidFuncPtr* getIsrTable(volatile uint32_t *config) {
+static inline voidFuncPtr* getIsrTable(volatile uint32_t *config) {
 	voidFuncPtr* isr_table = NULL;
 	if(&PORTA_PCR0 <= config && config <= &PORTA_PCR31) isr_table = isr_table_portA;
 	else if(&PORTB_PCR0 <= config && config <= &PORTB_PCR31) isr_table = isr_table_portB;
@@ -456,7 +456,10 @@ extern void usb_init(void);
 
 #endif
 
-#if F_TIMER == 120000000
+#if F_TIMER == 128000000
+#define DEFAULT_FTM_MOD (65536 - 1)
+#define DEFAULT_FTM_PRESCALE 2
+#elif F_TIMER == 120000000
 #define DEFAULT_FTM_MOD (61440 - 1)
 #define DEFAULT_FTM_PRESCALE 2
 #elif F_TIMER == 108000000
@@ -583,8 +586,15 @@ void _init_Teensyduino_internal_(void)
 	// for background about this startup delay, please see these conversations
 	// https://forum.pjrc.com/threads/36606-startup-time-(400ms)?p=113980&viewfull=1#post113980
 	// https://forum.pjrc.com/threads/31290-Teensey-3-2-Teensey-Loader-1-24-Issues?p=87273&viewfull=1#post87273
-	delay(400);
+#if TEENSYDUINO >= 142
+	delay(25);
 	usb_init();
+	delay(275);
+#else
+	delay(50);
+	usb_init();
+	delay(350);
+#endif
 }
 
 
@@ -898,14 +908,17 @@ void analogWrite(uint8_t pin, int val)
 }
 
 
-void analogWriteRes(uint32_t bits)
+uint32_t analogWriteRes(uint32_t bits)
 {
+	uint32_t prior_res;
 	if (bits < 1) {
 		bits = 1;
 	} else if (bits > 16) {
 		bits = 16;
 	}
+	prior_res = analog_write_res;
 	analog_write_res = bits;
+	return prior_res;
 }
 
 
@@ -926,6 +939,11 @@ void analogWriteFrequency(uint8_t pin, float frequency)
 		ftmClock = 16000000;
 	} else
 #endif
+#if defined(__MKL26Z64__)
+	// Teensy LC does not support slow clock source (ftmClockSource = 2)
+	ftmClockSource = 1; 	// Use default F_TIMER clock source
+	ftmClock = F_TIMER;	// Set variable for the actual timer clock frequency
+#else
 	if (frequency < (float)(F_TIMER >> 7) / 65536.0f) {
 		// frequency is too low for working with F_TIMER:
 		ftmClockSource = 2; 	// Use alternative 31250Hz clock source
@@ -934,6 +952,7 @@ void analogWriteFrequency(uint8_t pin, float frequency)
 		ftmClockSource = 1; 	// Use default F_TIMER clock source
 		ftmClock = F_TIMER;	// Set variable for the actual timer clock frequency
 	}
+#endif
 
 	
 	for (prescale = 0; prescale < 7; prescale++) {
@@ -1190,7 +1209,9 @@ void delay(uint32_t ms)
 }
 
 // TODO: verify these result in correct timeouts...
-#if F_CPU == 240000000
+#if F_CPU == 256000000
+#define PULSEIN_LOOPS_PER_USEC 34
+#elif F_CPU == 240000000
 #define PULSEIN_LOOPS_PER_USEC 33
 #elif F_CPU == 216000000
 #define PULSEIN_LOOPS_PER_USEC 31

@@ -26,12 +26,10 @@
      
 */
 
-extern "C" {
 #include <inttypes.h>
 #include <avr/io.h>
 #include <avr/pgmspace.h>
-#include <wiring.h> // added 18 Sept 2008 for Arduino release 0012
-}
+#include <wiring.h>
 
 #define ksSOURCE
 #include "ks0108.h"
@@ -416,7 +414,7 @@ int ks0108::PutChar(char c) {
 	return 0;
 }
 
-void ks0108::Puts(char* str) {
+void ks0108::Puts(const char* str) {
 	int x = this->Coord.x;
 	while(*str != 0) {
 		if(*str == '\n') {

@@ -16,7 +16,7 @@
  * Typical pin layout used:
  * -----------------------------------------------------------------------------------------
  *             MFRC522      Arduino       Arduino   Arduino    Arduino          Arduino
- *             Reader/PCD   Uno           Mega      Nano v3    Leonardo/Micro   Pro Micro
+ *             Reader/PCD   Uno/101       Mega      Nano v3    Leonardo/Micro   Pro Micro
  * Signal      Pin          Pin           Pin       Pin        Pin              Pin
  * -----------------------------------------------------------------------------------------
  * RST/Reset   RST          9             5         D9         RESET/ICSP-5     RST
@@ -30,8 +30,8 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
-#define RST_PIN         9           // Configurable, see typical pin layout above
-#define SS_PIN          10          // Configurable, see typical pin layout above
+constexpr uint8_t RST_PIN = 9;     // Configurable, see typical pin layout above
+constexpr uint8_t SS_PIN = 10;     // Configurable, see typical pin layout above
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 

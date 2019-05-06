@@ -1,6 +1,6 @@
 /*
  * glcd_delay.h -  openGLCD library support- provides accurate delays
- * Copyright (c) 2011-2014 Bill Perry
+ * Copyright (c) 2011-2016 Bill Perry
  *
  * vi:ts=4
  *
@@ -43,7 +43,7 @@
 #include "delay_cycles_avr.h"
 #define _delayNanoseconds(__ns)     _delay_cycles( (double)(F_CPU)*((double)__ns)/1.0e9 + 0.5 )
 
-#elif defined(__MK20DX128__) || defined(__MK20DX256__) ||  defined(__MKL26Z64__)// for Teensy3/3.1/LC
+#elif defined(__arm__) // for ARM products
 #include "delay_cycles_arm.h"
 #define _delayNanoseconds(__ns)     _delay_cycles( (double)(F_CPU)*((double)__ns)/1.0e9 + 0.5 )
 

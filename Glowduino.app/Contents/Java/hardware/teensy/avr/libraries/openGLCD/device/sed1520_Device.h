@@ -29,9 +29,9 @@
 #error "SED1520 CHIP_HEIGHT < DISPLAY_HEIGHT but CHIP_WIDTH != DISPLAY_WIDTH"
 #endif
 
-#if (CHIP_HEIGHT == DISPLAY_HEIGHT) && (DISPLAY_WIDTH != 2 * CHIP_WIDTH)
-#error "SED1520 CHIP_HEIGHT == DISPLAY_HEIGHT but DISPLAY_WIDTH != 2 * CHIP_WIDTH"
-#endif
+//#if (CHIP_HEIGHT == DISPLAY_HEIGHT) && (DISPLAY_WIDTH != 2 * CHIP_WIDTH)
+//#error "SED1520 CHIP_HEIGHT == DISPLAY_HEIGHT but DISPLAY_WIDTH != 2 * CHIP_WIDTH"
+//#endif
 
 #if defined(glcdPinEN) && defined(glcdPinE1) 
 #error "SED1520 configuration cannot use both glcdPinEN and glcdPinE1"
@@ -49,20 +49,45 @@
 #error "SED1520 configuration missing glcdPinE2"
 #endif
 
-#if !defined(glcdPinE1) && !defined(glcdPinE2) & !defined(glcdPinEN)
+#if defined(glcdPinE3) && !defined(glcdPinE2) 
+#error "SED1520 configuration missing glcdPinE2"
+#endif
+
+#if defined(glcdPinE3) && !defined(glcdPinE1) 
+#error "SED1520 configuration missing glcdPinE1"
+#endif
+
+
+#if !defined(glcdPinE1) && !defined(glcdPinE2) && !defined(glcdPinE3) && !defined(glcdPinEN)
 #error "SED1520 configuration requires an enable pin"
 #endif
 
-#if (defined(glcdPinE1) || defined(glcdPinE2)) && defined(glcd_CHIP0)
-#error "SED1520 cannot use glcdPinE1 or glcdPinE2 with glcd_CHIP0"
+#if (defined(glcdPinE1) || defined(glcdPinE2) || defined(glcdPinE3) || defined(glcdPinE4)) && defined(glcd_CHIP0)
+#error "SED1520 cannot use glcdPinE1 or glcdPinE2 or glcdPinE3 or glcdPinE4 with glcd_CHIP0"
 #endif
 
-#if (defined(glcdPinE1) || defined(glcdPinE2)) && defined(glcd_CHIP0)
-#error "SED1520 cannot use glcdPinE1 or glcdPinE2 with glcd_CHIP0"
+#if (defined(glcdPinE1) || defined(glcdPinE2) || defined(glcdPinE3) || defined(glcdPinE4)) && defined(glcd_CHIP1)
+#error "SED1520 cannot use glcdPinE1 or glcdPinE2 or glcdPinE3 or glcdPinE4 with glcd_CHIP1"
 #endif
 
-#if (defined(glcdPinE1) || defined(glcdPinE2)) && defined(glcd_CHIP1)
-#error "SED1520 cannot use glcdPinE1 or glcdPinE2 with glcd_CHIP1"
+#if defined(glcdPinE2) && !defined(glcdPinE3) && !defined(glcdPinE4) && (glcd_CHIP_COUNT != 2)
+#error "SED1520 glcdPinE3 and glcdPinE4 are not defined but chip count is not 2"
+#endif
+
+#if defined(glcdPinE3) && (glcd_CHIP_COUNT < 3)
+#error "SED1520 glcdPinE3 defined but chip count is < 3"
+#endif
+
+#if (glcd_CHIP_COUNT > 2) && !defined(glcdPinE3)
+#error "SED1520 chip count is 3 or more but glcdPinE3 s not defined"
+#endif
+
+#if defined(glcdPinE4) && (glcd_CHIP_COUNT != 4)
+#error "SED1520 glcdPinE4 defined but chip count is not 4"
+#endif
+
+#if (glcd_CHIP_COUNT == 4) && !defined(glcdPinE4)
+#error "SED1520 chip count is 4 but glcdPinE4 s not defined"
 #endif
 
 #if defined(glcdPinEN) && (!defined(glcd_CHIP0) || !defined(glcd_CHIP1))
@@ -119,17 +144,6 @@
 #endif
 
 /*
- *	For now Assume only 2 chips
- *
- *	This assumption will also keep from doing a
- *	true modulo function to detect chip crossover
- *	as the chipwidth is not a power of two which
- *	means that masking cannot be used in place
- *  of real division.
- */
-
-
-/*
  * Check for single E line or seperate E lines.
  */
 #ifdef glcdPinEN // single enable
@@ -138,23 +152,79 @@
 
 #else
 
-#define glcdDev_ENstrobeHi(chip) 	\
-do									\
-{									\
-	if(chip == 0)					\
+// for modules with 4 enables
+#if defined(glcdPinE4)
+#define glcdDev_ENstrobeHi(chip) 			\
+do											\
+{											\
+	if(chip == 0)							\
        glcdio_WritePin(glcdPinE1, HIGH);	\
-	else							\
+	else if( chip == 1)						\
+       glcdio_WritePin(glcdPinE2, HIGH);	\
+	else if( chip == 2)						\
+       glcdio_WritePin(glcdPinE3, HIGH);	\
+	else                                    \
+       glcdio_WritePin(glcdPinE4, HIGH);	\
+}while(0)
+
+#define glcdDev_ENstrobeLo(chip) 			\
+do											\
+{											\
+	if(chip == 0)							\
+	   glcdio_WritePin(glcdPinE1, LOW);		\
+	else if( chip == 1)						\
+       glcdio_WritePin(glcdPinE2, LOW);		\
+	else if( chip == 2)						\
+       glcdio_WritePin(glcdPinE3, LOW);		\
+	else                                    \
+       glcdio_WritePin(glcdPinE4, LOW);		\
+}while(0)
+
+// for modules with 3 enables
+#elif defined(glcdPinE3)
+#define glcdDev_ENstrobeHi(chip) 			\
+do											\
+{											\
+	if(chip == 0)							\
+       glcdio_WritePin(glcdPinE1, HIGH);	\
+	else if( chip == 1)						\
+       glcdio_WritePin(glcdPinE2, HIGH);	\
+	else                                    \
+       glcdio_WritePin(glcdPinE3, HIGH);	\
+}while(0)
+
+#define glcdDev_ENstrobeLo(chip) 			\
+do											\
+{											\
+	if(chip == 0)							\
+	   glcdio_WritePin(glcdPinE1, LOW);		\
+	else if( chip == 1)						\
+       glcdio_WritePin(glcdPinE2, LOW);		\
+	else                                    \
+       glcdio_WritePin(glcdPinE3, LOW);		\
+}while(0)
+
+#else // assume 2 enables
+
+#define glcdDev_ENstrobeHi(chip) 			\
+do											\
+{											\
+	if(chip == 0)							\
+       glcdio_WritePin(glcdPinE1, HIGH);	\
+	else									\
        glcdio_WritePin(glcdPinE2, HIGH);	\
 }while(0)
 
-#define glcdDev_ENstrobeLo(chip) 	\
-do									\
-{									\
-	if(chip == 0)					\
-	   glcdio_WritePin(glcdPinE1, LOW);	\
-	else							\
-	   glcdio_WritePin(glcdPinE2, LOW);	\
+#define glcdDev_ENstrobeLo(chip) 			\
+do											\
+{											\
+	if(chip == 0)							\
+	   glcdio_WritePin(glcdPinE1, LOW);		\
+	else									\
+	   glcdio_WritePin(glcdPinE2, LOW);		\
 }while(0)
+#endif
+
 #endif
 
 
@@ -163,18 +233,164 @@ do									\
  * Convert X & Y coordinate to chip values
  */
 
-#if CHIP_HEIGHT < DISPLAY_HEIGHT
+
+#if CHIP_HEIGHT < DISPLAY_HEIGHT // vertical orientation chips (rare)
+#if (glcd_CHIP_COUNT == 2)
 #define glcdDev_XYval2Chip(x, y)	(((y) < CHIP_HEIGHT) ? 0 : 1)
+
+#elif (glcd_CHIP_COUNT == 4)
+#define glcdDev_XYval2Chip(x, y)    \
+({									\
+uint8_t _chip;						\
+	do								\
+	{								\
+		if( y < CHIP_HEIGHT)			\
+			_chip = 0;				\
+		else if( y < CHIP_HEIGHT*2)	\
+			_chip = 1;				\
+		else if( y < CHIP_HEIGHT*3)	\
+			_chip = 2;				\
+		else						\
+			_chip = 3;				\
+	}while(0);						\
+	_chip;	/* return value */		\
+})
+
+#elif (glcd_CHIP_COUNT == 3)
+#define glcdDev_XYval2Chip(x, y)    \
+({									\
+uint8_t _chip;						\
+	do								\
+	{								\
+		if( y < CHIP_HEIGHT)			\
+			_chip = 0;				\
+		else if( y < CHIP_HEIGHT*2)	\
+			_chip = 1;				\
+		else						\
+			_chip = 2;				\
+	}while(0);						\
+	_chip;	/* return value */		\
+})
 #else
+#error unsupported number of chips
+#endif
+
+#else // horizontal orientation chips (normal)
+
+#if (glcd_CHIP_COUNT == 2)
 #define glcdDev_XYval2Chip(x, y)	(((x) < CHIP_WIDTH) ? 0 : 1)
+
+#elif (glcd_CHIP_COUNT == 4)
+#define glcdDev_XYval2Chip(x, y)    \
+({									\
+uint8_t _chip;						\
+	do								\
+	{								\
+		if( x < CHIP_WIDTH)			\
+			_chip = 0;				\
+		else if(x < CHIP_WIDTH*2)	\
+			_chip = 1;				\
+		else if(x < CHIP_WIDTH*3)	\
+			_chip = 2;				\
+		else						\
+			_chip = 3;				\
+	}while(0);						\
+	_chip;	/* return value */		\
+})
+
+#elif (glcd_CHIP_COUNT == 3)
+#define glcdDev_XYval2Chip(x, y)    \
+({									\
+uint8_t _chip;						\
+	do								\
+	{								\
+		if( (x) < CHIP_WIDTH)			\
+			_chip = 0;				\
+		else if( (x) < CHIP_WIDTH*2)	\
+			_chip = 1;				\
+		else						\
+			_chip = 2;				\
+	}while(0);						\
+	_chip;	/* return value */		\
+})
+#else
+#error unsupported number of chips
+#endif
+
 #endif
 
 /*
- * check for special MT12232d mode
+ * check for normal vs special MT12232d mode
  */
 #ifndef GLCD_MT12232D_MODE
+// "normal" mode starts here
 
+/*
+ * Custom init routine to complete reset & re-init chip
+ * Note: this is initalizing the chip with its default
+ * powerup configuration. It can useful if the chip went
+ * hayware and re-initalization is being done without a
+ * power cycle.
+ */
+#define glcdDev_Init(chip)					\
+({												\
+uint8_t status;									\
+	do												\
+	{												\
+		WriteCommand(LCD_RESET, chip);				\
+		delay(5);									\
+		WriteCommand(LCD_STATICDRIVE_OFF, chip);	\
+		WriteCommand(LCD_DUTY_32, chip);			\
+		WriteCommand(LCD_ADC_RIGHTWARD, chip);	    \
+		WriteCommand(LCD_RMW_END, chip);			\
+		WriteCommand(LCD_DISP_START, chip);			\
+		WriteCommand(LCD_ON, chip);					\
+	}while(0);										\
+	status = GLCD_ENOERR;							\
+	status;	/* return value of macro */				\
+})
+
+
+#if (glcd_CHIP_COUNT == 2)
 #define glcdDev_Xval2ChipCol(x)		((x) < CHIP_WIDTH ? x : (x - CHIP_WIDTH))
+
+#elif (glcd_CHIP_COUNT == 4)
+#define glcdDev_Xval2ChipCol(x)    \
+({									\
+uint8_t _col;						\
+	do								\
+	{								\
+		if( x < CHIP_WIDTH)			\
+			_col = x;				\
+		else if(x < CHIP_WIDTH*2)	\
+			_col = x - CHIP_WIDTH;	\
+		else if(x < CHIP_WIDTH*3)	\
+			_col = x - CHIP_WIDTH*2;	\
+		else						\
+			_col = x - CHIP_WIDTH*3;\
+	}while(0);						\
+	_col;	/* return value */		\
+})
+
+#elif (glcd_CHIP_COUNT == 3)
+#define glcdDev_Xval2ChipCol(x)    \
+({									\
+uint8_t _col;						\
+	do								\
+	{								\
+		if( (x) < CHIP_WIDTH)			\
+			_col = x;				\
+		else if( (x) < CHIP_WIDTH*2)	\
+			_col = (x) - CHIP_WIDTH;	\
+		else						\
+			_col = (x)- CHIP_WIDTH*2;\
+	}while(0);						\
+	_col;	/* return value */		\
+})
+
+#else
+#error unsupported number of chips
+#endif
 
 #else
 

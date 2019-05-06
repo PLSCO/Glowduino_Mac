@@ -47,7 +47,7 @@ void  clock( int duration)
 #ifdef buttonPin      
       if(checkSetButton(buttonPin, potPin))
           startTime = now();   //  time changed so reset start time
-#endif#      
+#endif
     }    
   }
 }

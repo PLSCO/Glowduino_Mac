@@ -17,17 +17,17 @@
 	<key>CFBundlePackageType</key>
 	<string>BRPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>Java 8 Update 111 build 14</string>
+	<string>Java 8 Update 191 build 12</string>
 	<key>CFBundleVersion</key>
-	<string>1.8.111.14</string>
+	<string>1.8.191.12</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Java Runtime, Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.</string>
+	<string>Java Runtime, Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.</string>
 	<key>SUAllowsAutomaticUpdates</key>
 	<string>NO</string>
 	<key>SUEnableAutomaticChecks</key>
 	<string>NO</string>
 	<key>SUFeedURL</key>
-	<string>https://javadl-esd-secure.oracle.com/update/mac/au-1.8.0_111.xml</string>
+	<string>https://javadl-esd-secure.oracle.com/update/mac/au-1.8.0_191.xml</string>
 	<key>SUPublicDSAKeyFile</key>
 	<string>dsa_pub.pem</string>
 	<key>SUScheduledCheckInterval</key>
@@ -41,17 +41,17 @@
 			<key>WebPluginTypeDescription</key>
 			<string>Basic Java Applet</string>
 		</dict>
-		<key>application/x-java-applet;deploy=11.111.2</key>
+		<key>application/x-java-applet;deploy=11.191.2</key>
 		<dict>
 			<key>WebPluginTypeDescription</key>
 			<string>Java Applet</string>
 		</dict>
-		<key>application/x-java-applet;javafx=8.0.111</key>
+		<key>application/x-java-applet;javafx=8.0.191</key>
 		<dict>
 			<key>WebPluginTypeDescription</key>
 			<string>JavaFX Applet</string>
 		</dict>
-		<key>application/x-java-applet;jpi-version=1.8.0_111</key>
+		<key>application/x-java-applet;jpi-version=1.8.0_191</key>
 		<dict>
 			<key>WebPluginTypeDescription</key>
 			<string>Java Applet</string>

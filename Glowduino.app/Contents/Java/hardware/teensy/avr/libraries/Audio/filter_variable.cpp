@@ -24,6 +24,7 @@
  * THE SOFTWARE.
  */
 
+#include <Arduino.h>
 #include "filter_variable.h"
 #include "utility/dspinst.h"
 
@@ -45,7 +46,7 @@
 // no audible difference.
 //#define IMPROVE_EXPONENTIAL_ACCURACY
 
-#if defined(KINETISK)
+#if defined(__ARM_ARCH_7EM__)
 
 void AudioFilterStateVariable::update_fixed(const int16_t *in,
 	int16_t *lp, int16_t *bp, int16_t *hp)

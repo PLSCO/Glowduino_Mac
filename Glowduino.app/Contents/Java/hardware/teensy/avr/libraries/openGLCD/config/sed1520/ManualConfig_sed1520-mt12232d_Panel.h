@@ -113,10 +113,12 @@
 
 /*
  * Pins can be assigned using arduino pin numbers 0-n
- * Pins on AVR devices can also be assigned using PIN_Pb 
+ * Pins on AVR devices can also be assigned using AVRPIN_Pb
  *    where P is port A-L and b is bit 0-7
- *     Example: port D pin 3 is PIN_D3
+ *     Example: port D bit 3 is AVRPIN_D3
  *
+ * Pins on AVR devices can also be assigned using 0xPb for ports A to F
+ *     Example: port D bit 3 is 0xD3
  */
 
 
@@ -154,13 +156,11 @@
 #define glcd_CHIP1 glcdPinCSEL1,LOW
 
 /*********************************************************/
-/*   Backlight Control Configuration                     */
+/*   Backlight Active Level Configuration                */
+/*   Defines level on glcdPinBL pin to turn on backlight */
 /*********************************************************/
 
-//                    BLpin    on   off
-#define glcd_BLctl glcdPinBL, HIGH, LOW
-
-
+#define glcd_BLactlevel HIGH
 
 
 // defines for panel specific timing 

@@ -39,14 +39,13 @@
 #ifndef systemClock_h
 #define systemClock_h
 
-#include "Arduino.h"
 /********************************************************************/
 // MCG_S Bit Fields
-#define MCG_S_CLKST_SHIFT    ( uint8_t )0x2
-#define LPTMR_MCGIRCLK       ( uint8_t )0x0
-#define LPTMR_LPO            ( uint8_t )0x1
-#define LPTMR_ERCLK32K       ( uint8_t )0x2
-#define LPTMR_OSCERCLK       ( uint8_t )0x3
+#define MCG_S_CLKST_SHIFT    ( uint8_t )0x02
+#define LPTMR_MCGIRCLK       ( uint8_t )0x00
+#define LPTMR_LPO            ( uint8_t )0x01
+#define LPTMR_ERCLK32K       ( uint8_t )0x02
+#define LPTMR_OSCERCLK       ( uint8_t )0x03
 #define MCG_C1_FRDIV4_BIT    ( uint8_t )0x05
 /********************************************************************/
 
@@ -79,7 +78,10 @@ typedef enum {
 } SPEED;
 
 static inline CLOCK_MODE mcg_mode( void );
-
+/**
+ *  Use lptmr as the systick counter while we switch clock domians.
+ *  Systick is disabled.
+ */
 static inline
 void start_lptmr_systick( void )
 __attribute__((always_inline, unused));
@@ -112,7 +114,11 @@ void start_lptmr_systick( void ) {
     // start low power timer, no interrupt, free running
     LPTMR0_CSR = LPTMR_CSR_TEN | LPTMR_CSR_TFC;
 }
-
+/**
+ *  Use lptmr as the systick counter while we switch clock domians.
+ *  Systick is renabled after lptmr runs for 1 millisecond. Lptmr was
+ *  started in start_lptmr_systick function.
+ */
 static inline
 void stop_lptmr_systick( uint32_t reload )
 __attribute__((always_inline, unused));
@@ -134,8 +140,187 @@ void stop_lptmr_systick( uint32_t reload ) {
     SYST_CVR = 0;
     SYST_CSR = SYST_CSR_CLKSOURCE | SYST_CSR_TICKINT | SYST_CSR_ENABLE;
 }
+/**
+ *  Transistion from clock domian pee -> blpe
+ */
+static inline
+void pee_blpe( void )
+__attribute__((always_inline, unused));
 
+static inline
+void pee_blpe( void ) {
+    if ( mcg_mode( ) != PEE ) return;
+    /* Moving from PEE to BLPE */
+    // first move from PEE to PBE
+    // select external reference clock as MCG_OUT
+    // now move to PBE mode
+    // make sure the FRDIV is configured to keep the FLL reference within spec.
+    MCG_C1 = MCG_C1_CLKS( 0x02 ) | MCG_C1_FRDIV( 0x04 );
+    // wait for the oscillator to initialize again
+    while ( !( MCG_S & MCG_S_OSCINIT0 ) ) ;
+    // wait for Reference clock to switch to external reference
+    while ( MCG_S & MCG_S_IREFST ) ;
+    // wait for MCGOUT to switch over to the external reference clock
+    while ( ( MCG_S & MCG_S_CLKST_MASK ) != MCG_S_CLKST( 0x02 ) ) ;
+    // To move from PBE to BLPE the LP bit must be set
+    MCG_C2 |= MCG_C2_LP; // set LP bit
+    // TODO: Is this right?
+    const uint32_t div = ( 16 / ( F_CPU / 1000000 ) ) - 1;
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( div ) | SIM_CLKDIV1_OUTDIV2( div ) |	 SIM_CLKDIV1_OUTDIV3( div ) | SIM_CLKDIV1_OUTDIV4( div );
+}
+/**
+ *  Transistion from clock domian blpe -> pee
+ */
+static inline
+void blpe_pee( void )
+__attribute__((always_inline, unused));
 
+static inline
+void blpe_pee( void ) {
+    /* Moving from BLPE to PEE */
+    // first move to PBE
+    MCG_C2 &= ~MCG_C2_LP; // clear the LP bit to exit BLPE
+    // move to PEE
+    // configure PLL and system clock dividers
+#if defined(__MK66FX1M0__)
+#if F_CPU > 120000000
+    SMC_PMCTRL = SMC_PMCTRL_RUNM(3); // enter HSRUN mode
+    while (SMC_PMSTAT != SMC_PMSTAT_HSRUN) ; // wait for HSRUN
+#endif
+#if F_CPU == 256000000
+    //See table in 27.4.6 MCG Control 6 Register (MCG_C6)
+    //16 -> Multiply factor 32. 32*8MHz =256MHz
+    MCG_C5 = MCG_C5_PRDIV0(0);
+    MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0(16);
+#elif F_CPU == 240000000
+    MCG_C5 = MCG_C5_PRDIV0( 0 );
+    MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0( 14 );
+#elif F_CPU == 216000000
+    MCG_C5 = MCG_C5_PRDIV0( 0 );
+    MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0( 11 );
+#elif F_CPU == 192000000
+    MCG_C5 = MCG_C5_PRDIV0( 0 );
+    MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0( 8 );
+#elif F_CPU == 180000000
+    MCG_C5 = MCG_C5_PRDIV0( 1 );
+    MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0( 29 );
+#elif F_CPU == 168000000
+    MCG_C5 = MCG_C5_PRDIV0( 0 );
+    MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0( 5 );
+#elif F_CPU == 144000000
+    MCG_C5 = MCG_C5_PRDIV0( 0 );
+    MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0( 2 );
+#elif F_CPU == 120000000
+    MCG_C5 = MCG_C5_PRDIV0( 1 );
+    MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0( 14 );
+#elif F_CPU == 96000000 || F_CPU == 48000000 || F_CPU == 24000000
+    MCG_C5 = MCG_C5_PRDIV0( 1 );
+    MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0( 8 );
+#elif F_CPU == 72000000
+    MCG_C5 = MCG_C5_PRDIV0( 1 );
+    MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0( 2 );
+#endif
+#else
+#if F_CPU == 72000000
+    MCG_C5 = MCG_C5_PRDIV0( 5 );		 // config PLL input for 16 MHz Crystal / 6 = 2.667 Hz
+#else
+    MCG_C5 = MCG_C5_PRDIV0( 3 );		 // config PLL input for 16 MHz Crystal / 4 = 4 MHz
+#endif
+#if F_CPU == 168000000
+    MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0( 18 ); // config PLL for 168 MHz output
+#elif F_CPU == 144000000
+    MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0( 12 ); // config PLL for 144 MHz output
+#elif F_CPU == 120000000
+    MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0( 6 ); // config PLL for 120 MHz output
+#elif F_CPU == 72000000
+    MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0( 3 ); // config PLL for 72 MHz output
+#elif F_CPU == 96000000 || F_CPU == 48000000 || F_CPU == 24000000
+    MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0( 0 ); // config PLL for 96 MHz output
+#endif
+#endif
+    while ( !(MCG_S & MCG_S_PLLST) ) ;
+    while ( !(MCG_S & MCG_S_LOCK0) ) ;
+    // configure the clock dividers back again before switching to the PLL to
+    // ensure the system clock speeds are in spec.
+#if F_CPU == 256000000
+    // config divisors: 256 MHz core, 64 MHz bus, 32 MHz flash, USB = IRC48M
+    // TODO: gradual ramp-up for HSRUN mode
+#if F_BUS == 64000000
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(0) | SIM_CLKDIV1_OUTDIV2(3) | SIM_CLKDIV1_OUTDIV4(7);
+#elif F_BUS == 128000000
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(0) | SIM_CLKDIV1_OUTDIV2(1) | SIM_CLKDIV1_OUTDIV4(7);
+#else
+#error "This F_CPU & F_BUS combination is not supported"
+#endif
+    SIM_CLKDIV2 = SIM_CLKDIV2_USBDIV(0);
+#elif F_CPU == 240000000
+#if F_BUS == 60000000
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 3 ) | SIM_CLKDIV1_OUTDIV4( 7 );
+#elif F_BUS == 80000000
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 2 ) | SIM_CLKDIV1_OUTDIV4( 7 );
+#elif F_BUS == 120000000
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 1 ) | SIM_CLKDIV1_OUTDIV4( 7 );
+#endif
+#elif F_CPU == 216000000
+#if F_BUS == 54000000
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 3 ) | SIM_CLKDIV1_OUTDIV4( 7 );
+#elif F_BUS == 72000000
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 2 ) | SIM_CLKDIV1_OUTDIV4( 7 );
+#elif F_BUS == 108000000
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 1 ) | SIM_CLKDIV1_OUTDIV4( 7 );
+#endif
+#elif F_CPU == 192000000
+#if F_BUS == 48000000
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 3 ) | SIM_CLKDIV1_OUTDIV4( 6 );
+#elif F_BUS == 64000000
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 2 ) | SIM_CLKDIV1_OUTDIV4( 6 );
+#elif F_BUS == 96000000
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 1 ) | SIM_CLKDIV1_OUTDIV4( 6 );
+#endif
+#elif F_CPU == 180000000
+    // config divisors: 180 MHz core, 60 MHz bus, 25.7 MHz flash, USB = IRC48M
+#if F_BUS == 60000000
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 2 ) | SIM_CLKDIV1_OUTDIV4( 6 );
+#elif F_BUS == 90000000
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 1 ) | SIM_CLKDIV1_OUTDIV4( 6 );
+#endif
+#elif F_CPU == 168000000
+    // config divisors: 168 MHz core, 56 MHz bus, 33.6 MHz flash
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 2 ) |	SIM_CLKDIV1_OUTDIV4( 4 );
+#elif F_CPU == 144000000
+    // config divisors: 144 MHz core, 48 MHz bus, 28.8 MHz flash
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 2 ) | SIM_CLKDIV1_OUTDIV4( 4 );
+#elif F_CPU == 120000000
+    // config divisors: 120 MHz core, 60 MHz bus, 24 MHz flash
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 1 ) |	SIM_CLKDIV1_OUTDIV4( 4 );
+#elif F_CPU == 96000000
+    // config divisors: 96 MHz core, 48 MHz bus, 24 MHz flash
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 1 ) | SIM_CLKDIV1_OUTDIV4( 3 );
+#elif F_CPU == 72000000
+    // config divisors: 72 MHz core, 36 MHz bus, 24 MHz flash
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 1 ) |	SIM_CLKDIV1_OUTDIV4( 2 );
+#elif F_CPU == 48000000
+    // config divisors: 48 MHz core, 48 MHz bus, 24 MHz flash
+#if defined(KINETISK)
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 1 ) | SIM_CLKDIV1_OUTDIV2( 1 ) | SIM_CLKDIV1_OUTDIV3( 1 ) |  SIM_CLKDIV1_OUTDIV4( 3 );
+#elif defined(KINETISL)
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 1 ) | SIM_CLKDIV1_OUTDIV4( 1 );
+#endif
+#elif F_CPU == 24000000
+    // config divisors: 24 MHz core, 24 MHz bus, 24 MHz flash
+#if defined( KINETISK )
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 3 ) | SIM_CLKDIV1_OUTDIV2( 3 ) | SIM_CLKDIV1_OUTDIV3( 3 ) | SIM_CLKDIV1_OUTDIV4( 3 );
+#elif defined( KINETISL )
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 3 ) | SIM_CLKDIV1_OUTDIV4( 0 );
+#endif
+#endif
+    // switch to PLL as clock source, FLL input = 16 MHz / 512
+    MCG_C1 = MCG_C1_CLKS( 0x00 ) | MCG_C1_FRDIV( 0x04 );
+    while ( ( MCG_S & MCG_S_CLKST_MASK ) != MCG_S_CLKST( 0x03 ) ) ;
+}
+/**
+ *  Transistion from clock domian pee -> blpi
+ */
 static inline
 void pee_blpi( void )
 __attribute__((always_inline, unused));
@@ -143,6 +328,7 @@ __attribute__((always_inline, unused));
 static inline
 void pee_blpi( void ) {
     if ( mcg_mode( ) != PEE ) return;
+    MCG_SC = MCG_SC_FCRDIV( 0 );
     /* Moving from PEE to BLPI */
     // first move from PEE to PBE
     // select external reference clock as MCG_OUT
@@ -157,11 +343,18 @@ void pee_blpi( void ) {
     while ( MCG_S & MCG_S_PLLST ) ; // Wait for PLLST status bit to clear to
     // indicate switch to FLL output
     // now move to FBI mode
-    MCG_C2 |= MCG_C2_IRCS; // set the IRCS bit to select the fast IRC
+    MCG_C2 |= MCG_C2_IRCS;// | 0x40; // set the IRCS bit to select the fast IRC
+#if defined( __MK64FX512__ )
+    MCG_C4 = MCG_C4_FCTRIM( 10 );
+#endif
     // set CLKS to 1 to select the internal reference clock
     // keep FRDIV at existing value to keep FLL ref clock in spec.
     // set IREFS to 1 to select internal reference clock
-    MCG_C1 = MCG_C1_CLKS( 0x01 ) | MCG_C1_FRDIV( 0x04 ) | MCG_C1_IREFS;
+#if defined( KINETISL )
+    MCG_C1 = MCG_C1_CLKS( 0x01 ) | MCG_C1_FRDIV( 0x04 ) | MCG_C1_IREFS | MCG_C1_IREFSTEN | MCG_C1_IRCLKEN;
+#else
+    MCG_C1 = MCG_C1_CLKS( 0x01 ) | MCG_C1_FRDIV( 0x04 ) | MCG_C1_IREFS | MCG_C1_IREFSTEN;
+#endif
     // wait for internal reference to be selected
     while ( !( MCG_S & MCG_S_IREFST ) ) ;
     // wait for fast internal reference to be selected
@@ -171,10 +364,14 @@ void pee_blpi( void ) {
     // now move to BLPI
     MCG_C2 |= MCG_C2_LP; // set the LP bit to enter BLPI
     // config divisors: 2 MHz, 2 MHz, 1 MHz
-    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 0 ) |	 SIM_CLKDIV1_OUTDIV4( 1 );
+#if defined( KINETISK )
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 1 ) | SIM_CLKDIV1_OUTDIV2( 1 ) | SIM_CLKDIV1_OUTDIV3( 1 ) | SIM_CLKDIV1_OUTDIV4( 3 );
+#elif defined( KINETISL )
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 1 ) | SIM_CLKDIV1_OUTDIV4( 3 );
+#endif
 }
 /**
- *  <#Description#>
+ *  Transistion from clock domian blpi -> pee
  */
 static inline
 void blpi_pee( void )
@@ -202,7 +399,12 @@ void blpi_pee( void ) {
         SMC_PMCTRL = SMC_PMCTRL_RUNM(3); // enter HSRUN mode
         while (SMC_PMSTAT != SMC_PMSTAT_HSRUN) ; // wait for HSRUN
     #endif
-    #if F_CPU == 240000000
+    #if F_CPU == 256000000
+        //See table in 27.4.6 MCG Control 6 Register (MCG_C6)
+        //16 -> Multiply factor 32. 32*8MHz =256MHz
+        MCG_C5 = MCG_C5_PRDIV0(0);
+        MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0(16);
+    #elif F_CPU == 240000000
         MCG_C5 = MCG_C5_PRDIV0( 0 );
         MCG_C6 = MCG_C6_PLLS | MCG_C6_VDIV0( 14 );
     #elif F_CPU == 216000000
@@ -252,7 +454,18 @@ void blpi_pee( void ) {
     while ( !(MCG_S & MCG_S_LOCK0) ) ;
     // configure the clock dividers back again before switching to the PLL to
     // ensure the system clock speeds are in spec.
-#if F_CPU == 240000000
+#if F_CPU == 256000000
+    // config divisors: 256 MHz core, 64 MHz bus, 32 MHz flash, USB = IRC48M
+    // TODO: gradual ramp-up for HSRUN mode
+#if F_BUS == 64000000
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(0) | SIM_CLKDIV1_OUTDIV2(3) | SIM_CLKDIV1_OUTDIV4(7);
+#elif F_BUS == 128000000
+    SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(0) | SIM_CLKDIV1_OUTDIV2(1) | SIM_CLKDIV1_OUTDIV4(7);
+#else
+#error "This F_CPU & F_BUS combination is not supported"
+#endif
+    SIM_CLKDIV2 = SIM_CLKDIV2_USBDIV(0);
+#elif F_CPU == 240000000
     #if F_BUS == 60000000
         SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 0 ) | SIM_CLKDIV1_OUTDIV2( 3 ) | SIM_CLKDIV1_OUTDIV4( 7 );
     #elif F_BUS == 80000000
@@ -308,7 +521,7 @@ void blpi_pee( void ) {
 #elif F_CPU == 24000000
     // config divisors: 24 MHz core, 24 MHz bus, 24 MHz flash
     #if defined( KINETISK )
-        SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(4) | SIM_CLKDIV1_OUTDIV2( 4 ) | SIM_CLKDIV1_OUTDIV3( 4 ) | SIM_CLKDIV1_OUTDIV4( 4 );
+        SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 3 ) | SIM_CLKDIV1_OUTDIV2( 3 ) | SIM_CLKDIV1_OUTDIV3( 3 ) | SIM_CLKDIV1_OUTDIV4( 3 );
     #elif defined( KINETISL )
         SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( 3 ) | SIM_CLKDIV1_OUTDIV4( 0 );
     #endif
@@ -318,7 +531,7 @@ void blpi_pee( void ) {
     while ( ( MCG_S & MCG_S_CLKST_MASK ) != MCG_S_CLKST( 0x03 ) ) ;
 }
 /**
- *  <#Description#>
+ *  Transistion from clock domian blpi -> blpe
  */
 static inline
 void blpi_blpe( void )
@@ -346,12 +559,12 @@ void blpi_blpe( void ) {
     while ( ( MCG_S & MCG_S_CLKST_MASK ) != MCG_S_CLKST( 0x02 ) ) ;
     // To move from FBE to BLPE the LP bit must be set
     MCG_C2 |= MCG_C2_LP; // set LP bit
-    
-    const uint32_t div = ( 16/( F_CPU/1000000 ) )-1;
+    // TODO: Is this right?
+    const uint32_t div = ( 16 / ( F_CPU / 1000000 ) ) - 1;
     SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1( div ) | SIM_CLKDIV1_OUTDIV2( div ) |	 SIM_CLKDIV1_OUTDIV3( div ) |SIM_CLKDIV1_OUTDIV4( div );
 }
 /**
- *  <#Description#>
+ *  Transistion from clock domian blpe -> blpi
  */
 static inline
 void blpe_blpi( void )
@@ -379,7 +592,7 @@ void blpe_blpi( void ) {
 }
 
 /**
- *  <#Description#>
+ *  Transistion from clock domian pbe -> pee
  */
 static inline
 void pbe_pee( void )
@@ -398,9 +611,9 @@ void pbe_pee( void ) {
 }
 
 /**
- *  <#Description#>
+ *  Get current mode
  *
- *  @return <#return value description#>
+ *  @return clock mode
  */
 static inline
 CLOCK_MODE mcg_mode( void )
@@ -468,6 +681,7 @@ CLOCK_MODE mcg_mode( void ) {
     {
         return FEE;                                                                 // return FEE code
     }
+    
     return UNDEFINED;
 }
 

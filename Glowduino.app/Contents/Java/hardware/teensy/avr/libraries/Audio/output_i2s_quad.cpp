@@ -24,6 +24,7 @@
  * THE SOFTWARE.
  */
 
+#include <Arduino.h>
 #include "output_i2s_quad.h"
 #include "memcpy_audio.h"
 
@@ -78,7 +79,8 @@ void AudioOutputI2SQuad::begin(void)
 	update_responsibility = update_setup();
 	dma.enable();
 
-	I2S0_TCSR |= I2S_TCSR_TE | I2S_TCSR_BCE | I2S_TCSR_FRDE | I2S_TCSR_FR;
+	I2S0_TCSR = I2S_TCSR_SR;
+	I2S0_TCSR = I2S_TCSR_TE | I2S_TCSR_BCE | I2S_TCSR_FRDE;
 	dma.attachInterrupt(isr);
 #endif
 }

@@ -121,7 +121,7 @@
  * Convert X & Y coordinates to chip values
  * The macros below assume that chips are either
  * horizontal (normal) or vertical.
- * Horizontal has never been tested and while close
+ * vertical has never been tested and while close
  * the DevXval2ChipCol() macro is currently incorrect for
  * this configuration.
  *

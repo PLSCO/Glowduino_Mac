@@ -49,6 +49,14 @@ String tweet = "";                  // string to hold the tweet
 boolean readingTweet = false;       // if you're currently reading the tweet
 
 void setup() {
+  // You can use Ethernet.init(pin) to configure the CS pin
+  //Ethernet.init(10);  // Most Arduino shields
+  //Ethernet.init(5);   // MKR ETH shield
+  //Ethernet.init(0);   // Teensy 2.0
+  //Ethernet.init(20);  // Teensy++ 2.0
+  //Ethernet.init(15);  // ESP8266 with Adafruit Featherwing Ethernet
+  //Ethernet.init(33);  // ESP32 with Adafruit Featherwing Ethernet
+
   // reserve space for the strings:
   currentLine.reserve(256);
   tweet.reserve(150);

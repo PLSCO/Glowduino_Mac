@@ -19,15 +19,15 @@
 <key>CFBundlePackageType</key>
 <string>APPL</string>
 <key>CFBundleShortVersionString</key>
-<string>1.8.0</string>
+<string>1.8.9</string>
 <key>CFBundleVersion</key>
-<string>1.8.0</string>
+<string>1.8.9</string>
 <key>CFBundleSignature</key>
 <string>Pde1</string>
 <key>NSHumanReadableCopyright</key>
 <string>Arduino LLC</string>
 <key>LSMinimumSystemVersion</key>
-<string>10.7</string>
+<string>10.8</string>
 <key>LSApplicationCategoryType</key>
 <string>public.app-category.education</string>
 <key>NSHighResolutionCapable</key>
@@ -74,10 +74,8 @@
 <key>JVMOptions</key>
 <array>
 <string>-Dapple.awt.application.name=Arduino</string>
-<string>-Dapple.laf.useScreenMenuBar=true</string>
 <string>-Dcom.apple.macos.use-file-dialog-packages=true</string>
 <string>-Dcom.apple.smallTabs=true</string>
-<string>-Dcom.apple.macos.useScreenMenuBar=true</string>
 <string>-DAPP_DIR=$APP_ROOT/Contents/Java</string>
 <string>-Djava.ext.dirs=$JVM_RUNTIME/Contents/Home/lib/ext/:$JVM_RUNTIME/Contents/Home/jre/lib/ext/</string>
 <string>-Xdock:name=Arduino</string>

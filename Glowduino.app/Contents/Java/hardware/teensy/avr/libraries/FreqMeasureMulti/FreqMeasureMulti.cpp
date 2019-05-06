@@ -146,9 +146,9 @@ float FreqMeasureMulti::countToFrequency(uint32_t count)
 float FreqMeasureMulti::countToNanoseconds(uint32_t count)
 {
 #if defined(__arm__) && defined(TEENSYDUINO) && defined(KINETISK)
-	return (float)(count * 1000) / (float)(F_BUS / 1000000);
+	return (float)count * (1000000000.0f / (float)F_BUS);
 #elif defined(__arm__) && defined(TEENSYDUINO) && defined(KINETISL)
-	return (float)(count * 1000) / (float)(F_PLL / 2000000);
+	return (float)count * (2000000000.0f / (float)F_PLL);
 #else
 	return 0.0;
 #endif
@@ -209,6 +209,9 @@ void FreqMeasureMulti::isr(bool inc)
 	#if defined(KINETISK)
 	csc[0] = (next_is_falling ? FTM_CSC_FALLING : FTM_CSC_RAISING);
 	#elif defined(KINETISL)
+	csc[0] = 0; // disable
+	asm volatile ("nop");
+	asm volatile ("nop");
 	csc[0] = (next_is_falling ? FTM_CSC_FALLING : FTM_CSC_RAISING) | FTM_CSC_CHF;
 	#endif
 	if (capture <= 0xE000 || !inc) {

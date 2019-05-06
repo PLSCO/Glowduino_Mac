@@ -58,13 +58,13 @@ uint8_t const  SPI_SCK_PIN = SCK_PIN;
 /** Protect block zero from write if nonzero */
 #define SD_PROTECT_BLOCK_ZERO 1
 /** init timeout ms */
-uint16_t const SD_INIT_TIMEOUT = 2000;
+const unsigned int SD_INIT_TIMEOUT = 2000;
 /** erase timeout ms */
-uint16_t const SD_ERASE_TIMEOUT = 10000;
+const unsigned int SD_ERASE_TIMEOUT = 10000;
 /** read timeout ms */
-uint16_t const SD_READ_TIMEOUT = 300;
+const unsigned int SD_READ_TIMEOUT = 300;
 /** write time out ms */
-uint16_t const SD_WRITE_TIMEOUT = 600;
+const unsigned int SD_WRITE_TIMEOUT = 600;
 //------------------------------------------------------------------------------
 // card types
 /** Standard capacity V1 SD card */
@@ -74,15 +74,10 @@ uint8_t const SD_CARD_TYPE_SD2 = 2;
 /** High Capacity SD card */
 uint8_t const SD_CARD_TYPE_SDHC = 3;
 //------------------------------------------------------------------------------
-#if defined(__MK64FX512__) || defined(__MK66FX1M0__)
-extern "C" {
-uint8_t KinetisSDHC_InitCard(void);
-uint8_t KinetisSDHC_GetCardType(void);
-int KinetisSDHC_ReadBlock(void * buff, uint32_t sector);
-int KinetisSDHC_WriteBlock(const void * buff, uint32_t sector);
-}
+#if defined(__MK64FX512__) || defined(__MK66FX1M0__) || defined(__IMXRT1052__)
+	#include "NXP_SDHC.h"
+	#define BUILTIN_SDCARD 254
 #endif
-#define BUILTIN_SDCARD 254
 //------------------------------------------------------------------------------
 /**
  * \class Sd2Card
@@ -95,11 +90,11 @@ class Sd2Card {
   /* Initialize an SD flash memory card with the selected SPI clock rate
    * and the SD chip select pin.  */
   uint8_t init(uint8_t sckRateID, uint8_t chipSelectPin) {
-    #if defined(__MK64FX512__) || defined(__MK66FX1M0__)
+    #if defined(__MK64FX512__) || defined(__MK66FX1M0__) || defined(__IMXRT1052__)
     if (chipSelectPin == BUILTIN_SDCARD) {
       chipSelectPin_ = BUILTIN_SDCARD;
-      uint8_t ret = KinetisSDHC_InitCard();
-      type_ = KinetisSDHC_GetCardType();
+      uint8_t ret = SDHC_CardInit();
+      type_ = SDHC_CardGetType();
       return (ret == 0) ? true : false;
     }
     #endif
@@ -109,18 +104,18 @@ class Sd2Card {
   uint8_t type(void) const {return type_;}
   /** Returns the current value, true or false, for partial block read. */
   uint8_t readBlock(uint32_t block, uint8_t* dst) {
-    #if defined(__MK64FX512__) || defined(__MK66FX1M0__)
+    #if defined(__MK64FX512__) || defined(__MK66FX1M0__) || defined(__IMXRT1052__)
     if (chipSelectPin_ == BUILTIN_SDCARD) {
-      return (KinetisSDHC_ReadBlock(dst, block) == 0) ? true : false;
+      return (SDHC_CardReadBlock(dst, block) == 0) ? true : false;
     }
     #endif
     return SD_readBlock(block, dst);
   }
   /** Return the card type: SD V1, SD V2 or SDHC */
   uint8_t writeBlock(uint32_t block, const uint8_t* src) {
-    #if defined(__MK64FX512__) || defined(__MK66FX1M0__)
+    #if defined(__MK64FX512__) || defined(__MK66FX1M0__) || defined(__IMXRT1052__)
     if (chipSelectPin_ == BUILTIN_SDCARD) {
-      return (KinetisSDHC_WriteBlock(src, block) == 0) ? true : false;
+      return (SDHC_CardWriteBlock(src, block) == 0) ? true : false;
     }
     #endif
     return SD_writeBlock(block, src);
@@ -141,7 +136,7 @@ class Sd2Card {
   uint8_t sendWriteCommand(uint32_t blockNumber, uint32_t eraseCount);
   void chipSelectHigh(void);
   void chipSelectLow(void);
-  uint8_t waitNotBusy(uint16_t timeoutMillis);
+  uint8_t waitNotBusy(unsigned int timeoutMillis);
   uint8_t writeData(uint8_t token, const uint8_t* src);
   uint8_t waitStartBlock(void);
   uint8_t setSckRate(uint8_t sckRateID);

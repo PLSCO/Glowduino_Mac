@@ -7,11 +7,19 @@
 
 #include <inttypes.h>
 
+#if defined(__AVR__) && !defined(TCCR2A)
+#error "Sorry, when using an AVR chip, Talkie requires Timer2.  This board doesn't have it."
+#elif defined(__MK20DX128__)
+#error "Sorry, Talkie does not work with Teensy 3.0 (no DAC pin for audio output)."
+#endif
+
 #define SAY_BUFFER_SIZE     24	// 24 sets of 4 bytes plus added queue indexes is about 100 added bytes.
 
 class Talkie
 {
 public:
+	void beginPWM(uint8_t pinPWM);
+	void beginPropShield();
 	void say(const uint8_t * address);
 	int8_t sayQ(const uint8_t * address);
 	const uint8_t * ptrAddr;
@@ -21,6 +29,7 @@ public:
 	bool setPtr(const uint8_t * addr);
 	bool say_add( const uint8_t *addr );	// sayisr() calls this
 	const uint8_t * say_remove();	// sayisr() calls this
+	
 private:
 	// Say queue
 	const uint8_t *  say_buffer[SAY_BUFFER_SIZE];
@@ -33,6 +42,7 @@ private:
 	
 	// Bitstream parser
 	uint8_t rev(uint8_t a);
+
 };
 
 

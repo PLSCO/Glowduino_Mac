@@ -1,6 +1,6 @@
 /*
   glcd_Device.cpp - openGLCD library support
-  Copyright (c) 2011-2014 Bill Perry 
+  Copyright (c) 2011-2016 Bill Perry 
   Copyright (c) 2009, 2010 Michael Margolis and Bill Perry 
   
   vi:ts=4  
@@ -392,6 +392,16 @@ int glcd_Device::Init(glcd_device_mode invert)
 	glcdio_WritePin(glcdPinE2,LOW); 	
 #endif
 
+#ifdef glcdPinE3
+	glcdio_PinMode(glcdPinE3,OUTPUT);	
+	glcdio_WritePin(glcdPinE3,LOW); 	
+#endif
+
+#ifdef glcdPinE4
+	glcdio_PinMode(glcdPinE4,OUTPUT);	
+	glcdio_WritePin(glcdPinE4,LOW); 	
+#endif
+
 #ifdef glcdPinEN
 	glcdio_PinMode(glcdPinEN,OUTPUT);	
 	glcdio_WritePin(glcdPinEN, LOW);
@@ -626,6 +636,7 @@ int glcd_Device::SetBacklight(int val)
  * Turn the display pixels on
  *
  * Turns on the display pixels. It does not alter or modify the backlight setting.
+ *
  * @returns 0 or GLCD_NOERR when successful or non zero error code when unsucessful
  *
  * @see OffDisplay()
@@ -675,6 +686,8 @@ int glcd_Device::OffDisplay(void)
  *
  * Turns on the display's pixels and backlight
  *
+ * @returns 0 or GLCD_NOERR when successful or non zero error code when unsucessful
+ *
  * @note
  *	The backlight will be turned on at full intensity
  *
@@ -692,6 +705,8 @@ int glcd_Device::On(void)
  * Turn off the display & backlight
  *
  * Turns off the display's pixels and backlight
+ *
+ * @returns 0 or GLCD_NOERR when successful or non zero error code when unsucessful
  *
  * @see On()
  * @see OffDisplay()
@@ -743,13 +758,7 @@ uint8_t glcd_Device::GetStatus(uint8_t chip)
 uint8_t status;
 
 	glcdDev_SelectChip(chip);
-	glcdio_DataDirIn();				// input mode
-//	glcdio_WriteByte(0xff);			// FIXME: turn on pullups to pre set "BUSY"
-									// this is only here it create a "BUSY" when
-									// users miswire the pins. This should
-									// still be done but needs to be handled
-									// properly without assuming AVR registers
-									// must be addressed before the 1.0 release.
+	glcdio_DataDirIn(1);			// input mode with pullups enabled
 	glcdio_SetRWDI(HIGH, LOW);		// R/W = HIGH, D/I = LOW
 //	glcdio_DelayNanoseconds(GLCD_tAS);
 	glcdDev_ENstrobeHi(chip);
@@ -766,7 +775,7 @@ uint8_t status;
 void glcd_Device::WaitReady( uint8_t chip)
 {
 	glcdDev_SelectChip(chip);
-	glcdio_DataDirIn();
+	glcdio_DataDirIn(0);				// without pullups enabled
 	glcdio_SetRWDI(HIGH, LOW);			// R/W = HIGH, D/I = LOW
 //	glcdio_DelayNanoseconds(GLCD_tAS);
 	glcdDev_ENstrobeHi(chip);

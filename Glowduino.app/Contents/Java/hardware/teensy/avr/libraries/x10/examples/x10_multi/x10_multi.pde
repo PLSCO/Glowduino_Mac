@@ -15,7 +15,6 @@
 
 // include the X10 library files:
 #include <x10.h>
-#include <x10constants.h>
 
 #define zcPin 2         // the zero crossing detect pin
 #define dataPin 3       // the X10 data out pin
@@ -30,23 +29,23 @@ void setup() {
   // begin serial:
   Serial.begin(9600);
   // Turn off all lights:
-  myHouse.write(A, ALL_UNITS_OFF,repeatTimes);
+  myHouse.write(HOUSE_A, ALL_UNITS_OFF,repeatTimes);
 }
 
 void loop() {
   // Turn on first module:
-  myHouse.write(A, UNIT_1,repeatTimes);               
-  myHouse.write(A, ON,repeatTimes);  
+  myHouse.write(HOUSE_A, UNIT_1,repeatTimes);               
+  myHouse.write(HOUSE_A, ON,repeatTimes);  
   // Turn off second module:   
-  myHouse.write(A, UNIT_2,repeatTimes);            
-  myHouse.write(A, OFF,repeatTimes);
+  myHouse.write(HOUSE_A, UNIT_2,repeatTimes);            
+  myHouse.write(HOUSE_A, OFF,repeatTimes);
   delay(500);
   // Turn off first module: 
-  myHouse.write(A, UNIT_1,repeatTimes);
-  myHouse.write(A, OFF,repeatTimes);
+  myHouse.write(HOUSE_A, UNIT_1,repeatTimes);
+  myHouse.write(HOUSE_A, OFF,repeatTimes);
   // turn on second module:
-  myHouse.write(A, UNIT_2,repeatTimes);              
-  myHouse.write(A, ON,repeatTimes);
+  myHouse.write(HOUSE_A, UNIT_2,repeatTimes);              
+  myHouse.write(HOUSE_A, ON,repeatTimes);
   delay(500);
 
 }

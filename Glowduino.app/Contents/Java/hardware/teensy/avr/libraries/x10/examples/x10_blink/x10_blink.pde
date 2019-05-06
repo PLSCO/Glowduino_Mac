@@ -11,7 +11,6 @@
   modified July 2010 by Paul Stoffregen <paul@pjrc.com>
 */
 #include <x10.h>
-#include <x10constants.h>
 
 const int zeroCrossPin = 2;
 const int dataPin      = 3;
@@ -25,12 +24,12 @@ void setup() {
 
 void loop() {
   Serial.println("Lights on:");
-  myHouse.write(A, UNIT_1, 3);
-  myHouse.write(A, ON, 3);
+  myHouse.write(HOUSE_A, UNIT_1, 3);
+  myHouse.write(HOUSE_A, ON, 3);
   delay(1000);
 
   Serial.println("Lights off:");
-  myHouse.write(A, UNIT_1, 3);
-  myHouse.write(A, OFF, 3);
+  myHouse.write(HOUSE_A, UNIT_1, 3);
+  myHouse.write(HOUSE_A, OFF, 3);
   delay(1000);
 }

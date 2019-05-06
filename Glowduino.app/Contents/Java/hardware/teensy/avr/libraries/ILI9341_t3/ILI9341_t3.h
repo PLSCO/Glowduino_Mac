@@ -53,6 +53,12 @@
 #include "Arduino.h"
 #endif
 
+#if defined(__MKL26Z64__)
+#error "Sorry, ILI9341_t3 does not work with Teensy LC.  Use Adafruit_ILI9341."
+#elif defined(__AVR__)
+#error "Sorry, ILI9341_t3 does not work with Teensy 2.0 or Teensy++ 2.0.  Use Adafruit_ILI9341."
+#endif
+
 #define ILI9341_TFTWIDTH  240
 #define ILI9341_TFTHEIGHT 320
 
@@ -138,6 +144,10 @@
 #define CL(_r,_g,_b) ((((_r)&0xF8)<<8)|(((_g)&0xFC)<<3)|((_b)>>3))
 
 #define sint16_t int16_t
+
+
+// Documentation on the ILI9341_t3 font data format:
+// https://forum.pjrc.com/threads/54316-ILI9341_t-font-structure-format
 
 typedef struct {
 	const unsigned char *index;

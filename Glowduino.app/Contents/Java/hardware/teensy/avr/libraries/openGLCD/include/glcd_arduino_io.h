@@ -1,6 +1,6 @@
 /*
   glcd_arduino_io.h - openGLCD library support - map arduino pins
-  Copyright (c) 2009-2014 Bill Perry
+  Copyright (c) 2009-2016 Bill Perry
 
   vi:ts=4
  
@@ -39,7 +39,6 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
 
 /*
  * Figure which Arduino core we are using
@@ -81,7 +80,8 @@ extern "C" {
 #define GLCD_CORE_TEENSY2pp
 #elif defined(__AVR_ATmega32U4__)   // Teensy 2.0
 #define GLCD_CORE_TEENSY2
-#elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MKL26Z64__) // Teensy 3/3.1/LC
+#elif defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MKL26Z64__) || defined(__MK64FX512__) || defined(__MK66FX1M0__)
+ // Teensy 3/3.1/LC
 #define GLCD_CORE_TEENSY3
 #else
 // For unknown Teensy boards, Fallback to using Arduino core code routines digitalWrite()/digitalRead()
@@ -360,7 +360,7 @@ extern "C" {
 		(P) == 18 ? _digitalPinToPortReg(18) : \
 		(P) == 19 ? _digitalPinToPortReg(19) : \
 		(P) == 20 ? _digitalPinToPortReg(20) : \
-		(P) == 21 ? _digitalPinToPortReg(22) : \
+		(P) == 21 ? _digitalPinToPortReg(21) : \
 		(P) == 22 ? _digitalPinToPortReg(22) : \
 		(P) == 23 ? _digitalPinToPortReg(23) : \
 		(P) == 24 ? _digitalPinToPortReg(24) : \
@@ -397,7 +397,7 @@ extern "C" {
 		(P) == 18 ? _digitalPinToBit(18) : \
 		(P) == 19 ? _digitalPinToBit(19) : \
 		(P) == 20 ? _digitalPinToBit(20) : \
-		(P) == 21 ? _digitalPinToBit(22) : \
+		(P) == 21 ? _digitalPinToBit(21) : \
 		(P) == 22 ? _digitalPinToBit(22) : \
 		(P) == 23 ? _digitalPinToBit(23) : \
 		(P) == 24 ? _digitalPinToBit(24) : \

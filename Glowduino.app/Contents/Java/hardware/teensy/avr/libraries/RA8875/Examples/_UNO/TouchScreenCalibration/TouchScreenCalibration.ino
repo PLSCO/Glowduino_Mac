@@ -34,7 +34,7 @@ Arduino's 8 bit: any
 */
 #define RA8875_RESET 9//any pin or nothing!
 
-#if defined(NEEDS_SET_MODULE)//Energia, this case is for stellaris/tiva
+//#if defined(NEEDS_SET_MODULE)//Energia, this case is for stellaris/tiva
 
 RA8875 tft = RA8875(RA8875_CS,RA8875_RESET);//Teensy3/arduino's
 

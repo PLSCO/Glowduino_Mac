@@ -10,17 +10,25 @@
 #define sinf sin
 #endif
 
-#include <SPI.h>
-#include <TFT_ILI9163C.h>
-
-
-#define NDOTS 256			// Number of dots 512
-#define SCALE 4096 //4096
+#define	BLACK   0x0000
+#define	BLUE    0x001F
+#define	RED     0xF800
+#define	GREEN   0x07E0
+#define CYAN    0x07FF
+#define MAGENTA 0xF81F
+#define YELLOW  0xFFE0  
+#define WHITE   0xFFFF
+#define NDOTS 512			// Number of dots 512
+#define SCALE 4096//4096
 #define INCREMENT 512//512
 #define PI2 6.283185307179586476925286766559
 #define RED_COLORS (32)
 #define GREEN_COLORS (64)
 #define BLUE_COLORS (32)
+
+#include <SPI.h>
+#include <Adafruit_GFX.h>
+#include <TFT_ILI9163C.h>
 
 /*
 Teensy3.x and Arduino's
@@ -28,23 +36,9 @@ You are using 4 wire SPI here, so:
  MOSI:  11//Teensy3.x/Arduino UNO (for MEGA/DUE refere to arduino site)
  MISO:  12//Teensy3.x/Arduino UNO (for MEGA/DUE refere to arduino site)
  SCK:   13//Teensy3.x/Arduino UNO (for MEGA/DUE refere to arduino site)
-ESP8266-----------------------------------
-Use:
-#define __CS  16  //(D0)
-#define __DC  5   //(D1)
-#define __RST 4   //(D2)
-
- SCLK:D5
- MOSI:D7
+ the rest of pin below:
  */
-#define __CS1 	10
-#define __DC 	9
-
-#if defined(TFT_ILI9163C_INSTANCES)
-TFT_ILI9163C tft = TFT_ILI9163C(REDPCB_NEW, __CS1, __DC);
-#else
-TFT_ILI9163C tft = TFT_ILI9163C(__CS1, __DC);
-#endif
+TFT_ILI9163C tft = TFT_ILI9163C(10, 9);
 
 int16_t sine[SCALE+(SCALE/4)];
 int16_t *cosi = &sine[SCALE/4];
@@ -69,7 +63,9 @@ void initialize (void){
 
 void setup() 
 {
+
   tft.begin();
+  
   initialize();
 }
 

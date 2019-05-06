@@ -78,7 +78,7 @@
 /*
  * define name for panel configuration
  */
-#define glcd_ConfigName "vk5121-Manual"
+#define glcd_ConfigName "mtb368-Manual"
 
 /*********************************************************/
 /*  Configuration for LCD panel specific configuration   */
@@ -96,10 +96,12 @@
 
 /*
  * Pins can be assigned using arduino pin numbers 0-n
- * Pins can also be assigned using PIN_Pb 
+ * Pins on AVR devices can also be assigned using AVRPIN_Pb
  *    where P is port A-L and b is bit 0-7
- *     Example: port D bit 3 is PIN_D3
+ *     Example: port D bit 3 is AVRPIN_D3
  *
+ * Pins on AVR devices can also be assigned using 0xPb for ports A to F
+ *     Example: port D bit 3 is 0xD3
  */
 
 #define glcdPinDI       A3    // Ao glcd pin
@@ -132,14 +134,12 @@
 #define glcd_CHIP0 glcdPinCSEL1,LOW,   glcdPinCSEL2,HIGH
 #define glcd_CHIP1 glcdPinCSEL1,HIGH,  glcdPinCSEL2,LOW    
 
+/*********************************************************/
+/*   Backlight Active Level Configuration                */
+/*   Defines level on glcdPinBL pin to turn on backlight */
+/*********************************************************/
 
-
-/*
- * Define for Backlight Control
- */
-//                    BLpin    on   off
-#define glcd_BLctl glcdPinBL, HIGH, LOW
-
+#define glcd_BLactlevel HIGH
 
 // defines for panel specific timing 
 #define GLCD_tDDR    290    /* tACC6: Data Delay time (E high to valid read data)             */

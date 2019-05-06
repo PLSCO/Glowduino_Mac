@@ -1,6 +1,6 @@
 /*
   gText.h - openGLCD library support - Text output routines
-  Copyright (c) 2011-2014  Bill Perry
+  Copyright (c) 2011-2016  Bill Perry
   Copyright (c) 2009,2010  Bill Perry and Michael Margolis
 
   vi:ts=4
@@ -247,8 +247,8 @@ enum gTextfmt_t
 	gTextfmt_left,		 		/**< horizontal left adjust */
 	gTextfmt_right,				/**< horizontal right adjust */
 	gTextfmt_top,				/**< vertical top */
-	gTextfmt_bottom,				/**< vertical bottom */
-	gTextfmt_center,				/**< horizonal/vertical center */
+	gTextfmt_bottom,			/**< vertical bottom */
+	gTextfmt_center,			/**< horizonal/vertical center */
 	gTextfmt_current,			/**< current horizontal/vertical location */
 };
 
@@ -395,13 +395,13 @@ class gText : public glcd_Device , public Print
 
 #if ARDUINO < 100
 	void write(uint8_t c);  // character output for print base class
-#ifdef GLCDCFG_UTF8
-	void writeUTF8(wchar_t utfc) { PutChar(utfc); }
+#if defined(GLCDCFG_UTF8) || defined(DOXYGEN)
+	void writeUTF8(wchar_t utfc);
 #endif
 #else
 	size_t write(uint8_t c);  // character output for print base class
-#ifdef GLCDCFG_UTF8
-	size_t writeUTF8(wchar_t utfc) { return(PutChar(utfc)); }
+#if defined(GLCDCFG_UTF8) || defined(DOXYGEN)
+	size_t writeUTF8(wchar_t utfc);
 #endif
 #endif
 

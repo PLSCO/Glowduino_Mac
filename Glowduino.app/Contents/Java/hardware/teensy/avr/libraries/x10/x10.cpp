@@ -13,10 +13,7 @@
     http://www.arduino.cc/en/Tutorial/x10
  */
 
-#include <stdlib.h>
-#include "WProgram.h"
 #include "x10.h"
-#include "x10constants.h"
 
 /*
  Constructor.

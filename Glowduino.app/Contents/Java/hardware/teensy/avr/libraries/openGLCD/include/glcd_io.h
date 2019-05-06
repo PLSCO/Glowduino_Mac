@@ -1,6 +1,6 @@
 /*
   glcd_io.h - openGLCD library support
-  Copyright (c) 2009-2014 Bill Perry
+  Copyright (c) 2009-2016 Bill Perry
   
   vi:ts=4
 
@@ -55,6 +55,49 @@
 
 #if defined(GLCD_CORE_CHIPKIT)
 #include "pic32FastDigital.h" // definitions for digitalReadFAST()/digitalWriteFast()
+#endif
+
+/*
+ * Check to make sure all data pins are defined and none are duplicates.
+ */
+
+
+#if !defined(glcdPinData0) || !defined(glcdPinData1) || !defined(glcdPinData2) || !defined(glcdPinData3) || !defined(glcdPinData4) || !defined(glcdPinData5) || !defined(glcdPinData6) || !defined(glcdPinData7)
+#error not all gcdPinDataN data pins have been defined
+#endif
+
+#if (glcdPinData0 == glcdPinData1) || (glcdPinData0 == glcdPinData2) || (glcdPinData0 == glcdPinData3) || (glcdPinData0 == glcdPinData4) || (glcdPinData0 == glcdPinData5) || (glcdPinData0 == glcdPinData6) || (glcdPinData0 == glcdPinData7) 
+#error gcdPinData0 is a duplicate data pin
+#endif
+
+#if (glcdPinData1 == glcdPinData0) || (glcdPinData1 == glcdPinData2) || (glcdPinData1 == glcdPinData3) || (glcdPinData1 == glcdPinData4) || (glcdPinData1 == glcdPinData5) || (glcdPinData1 == glcdPinData6) || (glcdPinData1 == glcdPinData7) 
+#error gcdPinData1 is a duplicate data pin
+#endif
+
+#if (glcdPinData2 == glcdPinData0) || (glcdPinData2 == glcdPinData1) || (glcdPinData2 == glcdPinData3) || (glcdPinData2 == glcdPinData4) || (glcdPinData2 == glcdPinData5) || (glcdPinData2 == glcdPinData6) || (glcdPinData2 == glcdPinData7) 
+#error gcdPinData2 is a duplicate data pin
+#endif
+
+#if (glcdPinData3 == glcdPinData0) || (glcdPinData3 == glcdPinData1) || (glcdPinData3 == glcdPinData2) || (glcdPinData3 == glcdPinData4) || (glcdPinData3 == glcdPinData5) || (glcdPinData3 == glcdPinData6) || (glcdPinData3 == glcdPinData7) 
+#error gcdPinData3 is a duplicate data pin
+#endif
+
+
+#if (glcdPinData4 == glcdPinData0) || (glcdPinData4 == glcdPinData1) || (glcdPinData4 == glcdPinData2) || (glcdPinData4 == glcdPinData3) || (glcdPinData4 == glcdPinData5) || (glcdPinData4 == glcdPinData6) || (glcdPinData4 == glcdPinData7) 
+#error gcdPinData4 is a duplicate data pin
+#endif
+
+
+#if (glcdPinData5 == glcdPinData0) || (glcdPinData5 == glcdPinData1) || (glcdPinData5 == glcdPinData2) || (glcdPinData5 == glcdPinData3) || (glcdPinData5 == glcdPinData4) || (glcdPinData5 == glcdPinData6) || (glcdPinData5 == glcdPinData7) 
+#error gcdPinData5 is a duplicate data pin
+#endif
+
+#if (glcdPinData6 == glcdPinData0) || (glcdPinData6 == glcdPinData1) || (glcdPinData6 == glcdPinData2) || (glcdPinData6 == glcdPinData3) || (glcdPinData6 == glcdPinData4) || (glcdPinData6 == glcdPinData5) || (glcdPinData6 == glcdPinData7) 
+#error gcdPinData6 is a duplicate data pin
+#endif
+
+#if (glcdPinData7 == glcdPinData0) || (glcdPinData7 == glcdPinData1) || (glcdPinData7 == glcdPinData2) || (glcdPinData7 == glcdPinData3) || (glcdPinData7 == glcdPinData4) || (glcdPinData7 == glcdPinData5) || (glcdPinData7 == glcdPinData6) 
+#error gcdPinData7 is a duplicate data pin
 #endif
 
  
@@ -126,7 +169,12 @@
 #define glcdio_WriteByte(data) glcdio_avrWriteByte(data)
 #define glcdio_ReadByte() glcdio_avrReadByte()
 #define	glcdio_DataDirOut() glcdio_avrDataDir(0xff)
-#define	glcdio_DataDirIn() glcdio_avrDataDir(0x00)
+#define	glcdio_DataDirIn(_ENpullups)	\
+do {									\
+		glcdio_avrDataDir(0x00);		\
+		if(_ENpullups)					\
+			glcdio_avrWriteByte(0xff);	\
+}while (0)
 
 #else // ================= non _AVRIO_AVRIO_ below here =============================
 
@@ -200,9 +248,42 @@ do {											\
 
 /*
  * Configure the direction of the data pins.
+ * If the IDE/core does not support INPUT_PULLUP then
+ * you don't get the pullups. It was added in IDE 1.0.2 so most users will
+ * be using something newer. It isn't really needed by the glcd device code,
+ * It is only used by the initial selftest in Init() and even then,
+ * it only comes into play if the user wired up things incorrectly.
+ * So its not a big deal if the pullups don't get enabled.
  */
-#define glcdio_DataDirIn()					\
-do {									\
+#ifdef INPUT_PULLUP
+#define glcdio_DataDirIn(_ENpullups)					\
+do {													\
+	if(_ENpullups)										\
+	{													\
+			glcdio_PinMode(glcdPinData0, INPUT_PULLUP);	\
+			glcdio_PinMode(glcdPinData1, INPUT_PULLUP);	\
+			glcdio_PinMode(glcdPinData2, INPUT_PULLUP);	\
+			glcdio_PinMode(glcdPinData3, INPUT_PULLUP);	\
+			glcdio_PinMode(glcdPinData4, INPUT_PULLUP);	\
+			glcdio_PinMode(glcdPinData5, INPUT_PULLUP);	\
+			glcdio_PinMode(glcdPinData6, INPUT_PULLUP);	\
+			glcdio_PinMode(glcdPinData7, INPUT_PULLUP);	\
+	}													\
+	else												\
+	{													\
+			glcdio_PinMode(glcdPinData0, INPUT);		\
+			glcdio_PinMode(glcdPinData1, INPUT);		\
+			glcdio_PinMode(glcdPinData2, INPUT);		\
+			glcdio_PinMode(glcdPinData3, INPUT);		\
+			glcdio_PinMode(glcdPinData4, INPUT);		\
+			glcdio_PinMode(glcdPinData5, INPUT);		\
+			glcdio_PinMode(glcdPinData6, INPUT);		\
+			glcdio_PinMode(glcdPinData7, INPUT);		\
+	}													\
+}while (0)
+#else
+#define glcdio_DataDirIn(_ENpullups)		\
+do {										\
 	glcdio_PinMode(glcdPinData0, INPUT);	\
 	glcdio_PinMode(glcdPinData1, INPUT);	\
 	glcdio_PinMode(glcdPinData2, INPUT);	\
@@ -212,6 +293,7 @@ do {									\
 	glcdio_PinMode(glcdPinData6, INPUT);	\
 	glcdio_PinMode(glcdPinData7, INPUT);	\
 }while (0)
+#endif
 
 #define glcdio_DataDirOut()				\
 do {									\
@@ -407,21 +489,15 @@ do{	glcdio_ChipSelect1(p1,v1);\
 
 /*
  * macros for backlight control
- * These work with the glcd_BLctl define in the panel files
- * NOTE: if the backlight control is backwards, do not modify
- * glcdio_BLon() and glcdio_BLoff() below, fix the levels in the config file
- * in the glcd_BLctl define.
+ * These work with the glcdPinBL and glcd_BLactlevel defines in the panel files
+ * NOTE: do not modify glcdio_BLon() and glcdio_BLoff() below to alter the backlight
+ * active level, fix the glcd_BLactlevel in the config file
  */
 
-#define _glcdio_BLstate(pin, onlevel, offlevel, state)\
- do { state ?  glcdio_WritePin(pin, onlevel) : glcdio_WritePin(pin, offlevel) ; } while(0)
-
-#define glcdio_BLstate(blctlstr, state) _glcdio_BLstate(blctlstr, state)
-
 #define glcdio_BLon() \
-	glcdio_BLstate(glcd_BLctl, 1)
+ do { glcd_BLactlevel ?  glcdio_WritePin(glcdPinBL, 1) : glcdio_WritePin(glcdPinBL, 0) ; } while(0)
 
 #define glcdio_BLoff() \
-	glcdio_BLstate(glcd_BLctl, 0)
+ do { glcd_BLactlevel ?  glcdio_WritePin(glcdPinBL, 0) : glcdio_WritePin(glcdPinBL, 1) ; } while(0)
 
 #endif // GLCD_IO_H

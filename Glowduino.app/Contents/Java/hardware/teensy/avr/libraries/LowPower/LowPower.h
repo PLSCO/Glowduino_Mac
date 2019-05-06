@@ -1,6 +1,10 @@
 #ifndef LowPower_h
 #define LowPower_h
 
+#ifndef __AVR__
+#error "This LowPower library only works on AVR processors"
+#endif
+
 enum period_t
 {
 	SLEEP_15Ms,

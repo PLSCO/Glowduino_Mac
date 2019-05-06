@@ -1,10 +1,10 @@
 %rename link_gcc_c_sequence                rdimon_link_gcc_c_sequence
 
 *rdimon_libc:
-%{!specs=nano.specs:-lc} %{specs=nano.specs:-lc_s}
+%{!specs=nano.specs:-lc} %{specs=nano.specs:-lc_nano}
 
 *rdimon_libgloss:
-%{!specs=nano.specs:-lrdimon} %{specs=nano.specs:-lrdimon_s}
+%{!specs=nano.specs:-lrdimon} %{specs=nano.specs:-lrdimon_nano}
 
 *link_gcc_c_sequence:
 %(rdimon_link_gcc_c_sequence) --start-group %G %(rdimon_libc) %(rdimon_libgloss) --end-group

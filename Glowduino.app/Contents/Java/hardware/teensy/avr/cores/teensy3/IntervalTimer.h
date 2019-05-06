@@ -1,6 +1,6 @@
 /* Teensyduino Core Library
  * http://www.pjrc.com/teensy/
- * Copyright (c) 2016 PJRC.COM, LLC.
+ * Copyright (c) 2017 PJRC.COM, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -72,6 +72,31 @@ public:
 	}
 	bool begin(void (*funct)(), double microseconds) {
 		return begin(funct, (float)microseconds);
+	}
+	void update(unsigned int microseconds) {
+		if (microseconds == 0 || microseconds > MAX_PERIOD) return;
+		uint32_t cycles = (F_BUS / 1000000) * microseconds - 1;
+		if (cycles < 36) return;
+		if (channel) channel->LDVAL = cycles;
+	}
+	void update(int microseconds) {
+		if (microseconds < 0) return;
+		return update((unsigned int)microseconds);
+	}
+	void update(unsigned long microseconds) {
+		return update((unsigned int)microseconds);
+	}
+	void update(long microseconds) {
+		return update((int)microseconds);
+	}
+	void update(float microseconds) {
+		if (microseconds <= 0 || microseconds > MAX_PERIOD) return;
+		uint32_t cycles = (float)(F_BUS / 1000000) * microseconds - 0.5;
+		if (cycles < 36) return;
+		if (channel) channel->LDVAL = cycles;
+	}
+	void update(double microseconds) {
+		return update((float)microseconds);
 	}
 	void end();
 	void priority(uint8_t n) {

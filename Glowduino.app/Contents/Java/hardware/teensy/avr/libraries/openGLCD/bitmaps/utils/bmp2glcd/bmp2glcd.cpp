@@ -35,6 +35,7 @@
 #include <iostream>
 #include <fstream>
 #include "EasyBMP.h"
+#include <unistd.h>
 #include <stdlib.h>
 
 #define WRITE_BYTES_PER_LINE 8

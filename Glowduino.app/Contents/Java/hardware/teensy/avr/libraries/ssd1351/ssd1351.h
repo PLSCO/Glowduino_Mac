@@ -15,6 +15,12 @@ Written by Limor Fried/Ladyada for Adafruit Industries.
 MIT license, all text above must be included in any redistribution
 ****************************************************/
 
+#if !defined(TEENSYDUINO) || !defined(__arm__)
+#error "Sorry, this optimized library only works on 32 bit Teensy.  Use Adafruit_SSD1551 for others."
+#elif defined(__MKL26Z64__)
+#error "Sorry, this optimized library doesn't work with Teensy LC.  Use Adafruit_SSD1551."
+#endif
+
 #pragma once
 #include <Arduino.h>
 #include <array>
@@ -45,9 +51,16 @@ template <typename T> void __attribute__((always_inline)) swap(T &a, T &b) {
 #define MEMBER_REQUIRES(...) template<bool HiddenMemberBool=true, REQUIRES(HiddenMemberBool && (__VA_ARGS__))>
 
 namespace ssd1351 {
-// Teensy 3.1 can only generate 30 MHz SPI when running at 120 MHz (overclock)
-// At all other speeds, SPI.beginTransaction() will use the fastest available clock
-#define SPICLOCK 20000000
+
+// Use 18mhz SPI as that seems about the fastest my version of the display can deal with. For some reason this still breaks
+// when overclocking the teensy, insights into this would be highly appreciated.
+// To work around it, you can define SLOW_SPI before including this, in which case the SPI speed is reduced to 15MHz.
+// This slows down the display communication quite a lot - but at least it allows running this on an overclocked teensy.
+#ifdef SLOW_SPI
+#define SPICLOCK 15000000
+#else
+#define SPICLOCK 18000000
+#endif
 
 #define CMD_COMMAND_LOCK 0xFD
 // These two bytes are used to issue some display lock commands for the init. I don't know what they do, but they seem necessary.
@@ -130,14 +143,15 @@ public:
 		if (reset < 255) {
 			pinMode(reset, OUTPUT);
 			digitalWrite(reset, HIGH);
-			delay(5);
+			delay(10);
 			digitalWrite(reset, LOW);
-			delay(20);
+			delay(10);
 			digitalWrite(reset, HIGH);
-			delay(150);
+			delay(10);
 		}
+		delay(30);
 
-		SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE0));
+		SPI.beginTransaction(spi_settings);
 
 		// Set display command lock settings - they have something to do with when the display can receive which commands,
 		// but I don't exactly understand what the implications are.

@@ -18,7 +18,7 @@
  * Typical pin layout used:
  * -----------------------------------------------------------------------------------------
  *             MFRC522      Arduino       Arduino   Arduino    Arduino          Arduino
- *             Reader/PCD   Uno           Mega      Nano v3    Leonardo/Micro   Pro Micro
+ *             Reader/PCD   Uno/101       Mega      Nano v3    Leonardo/Micro   Pro Micro
  * Signal      Pin          Pin           Pin       Pin        Pin              Pin
  * -----------------------------------------------------------------------------------------
  * RST/Reset   RST          9             5         D9         RESET/ICSP-5     RST
@@ -31,15 +31,15 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
-#define SS_PIN 10
-#define RST_PIN 9
+constexpr uint8_t RST_PIN = 9;     // Configurable, see typical pin layout above
+constexpr uint8_t SS_PIN = 10;     // Configurable, see typical pin layout above
  
 MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class
 
 MFRC522::MIFARE_Key key; 
 
 // Init array that will store new NUID 
-byte nuidPICC[3];
+byte nuidPICC[4];
 
 void setup() { 
   Serial.begin(9600);

@@ -1,8 +1,9 @@
 // -------------------------------------------------------------
-// a simple Arduino Teensy 3.1/3.2/3.6 CAN driver
+// a simple Arduino Teensy 3.1/3.2/3.5/3.6 CAN driver
 // by teachop
-// dual CAN support for MK66FX1M0 by Pawelsky
+// dual CAN support for MK66FX1M0 and updates for MK64FX512 by Pawelsky
 // Interrupt driven Rx/Tx with buffers, object oriented callbacks by Collin Kidder
+// RTR related code by H4nky84
 //
 #include "FlexCAN.h"
 #include "kinetis_flexcan.h"
@@ -105,7 +106,7 @@ void FlexCAN::begin(uint32_t baud, const CAN_filter_t &mask, uint8_t txAlt, uint
   if(flexcanBase == FLEXCAN0_BASE)
   {
     //Serial.println("Begin setup of CAN0");
-#ifdef __MK66FX1M0__
+#if defined(__MK66FX1M0__) || defined(__MK64FX512__)
     //  3=PTA12=CAN0_TX,  4=PTA13=CAN0_RX (default)
     // 29=PTB18=CAN0_TX, 30=PTB19=CAN0_RX (alternative)
     if(txAlt == 1) CORE_PIN29_CONFIG = PORT_PCR_MUX(2); else CORE_PIN3_CONFIG = PORT_PCR_MUX(2); 
@@ -397,6 +398,7 @@ int FlexCAN::read(CAN_message_t &msg)
     msg.id = rx_frame_buff[rx_buffer_tail].id;
     msg.ext = rx_frame_buff[rx_buffer_tail].ext;
     msg.len = rx_frame_buff[rx_buffer_tail].len;
+    msg.rtr = rx_frame_buff[rx_buffer_tail].rtr;
     for (int c = 0; c < 8; c++) msg.buf[c] = rx_frame_buff[rx_buffer_tail].buf[c];
     rx_buffer_tail = (rx_buffer_tail + 1) % SIZE_RX_BUFFER;
 
@@ -439,6 +441,7 @@ int FlexCAN::write(const CAN_message_t &msg)
     if (temp == tx_buffer_head) return 0;
     tx_frame_buff[tx_buffer_tail].id = msg.id;
     tx_frame_buff[tx_buffer_tail].ext = msg.ext;
+    tx_frame_buff[tx_buffer_tail].rtr = msg.rtr;
     tx_frame_buff[tx_buffer_tail].len  = msg.len;
     for (int c = 0; c < 8; c++) tx_frame_buff[tx_buffer_tail].buf[c] = msg.buf[c];
     tx_buffer_tail = temp;
@@ -460,13 +463,24 @@ void FlexCAN::writeTxRegisters(const CAN_message_t &msg, uint8_t buffer)
   }
   FLEXCANb_MBn_WORD0(flexcanBase, buffer) = (msg.buf[0]<<24)|(msg.buf[1]<<16)|(msg.buf[2]<<8)|msg.buf[3];
   FLEXCANb_MBn_WORD1(flexcanBase, buffer) = (msg.buf[4]<<24)|(msg.buf[5]<<16)|(msg.buf[6]<<8)|msg.buf[7];
+
   if(msg.ext) {
-    FLEXCANb_MBn_CS(flexcanBase, buffer) = FLEXCAN_MB_CS_CODE(FLEXCAN_MB_CODE_TX_ONCE)
+    if(msg.rtr) {
+        FLEXCANb_MBn_CS(flexcanBase, buffer) = FLEXCAN_MB_CS_CODE(FLEXCAN_MB_CODE_TX_ONCE)
+                                         | FLEXCAN_MB_CS_LENGTH(msg.len) | FLEXCAN_MB_CS_SRR | FLEXCAN_MB_CS_IDE | FLEXCAN_MB_CS_RTR;
+    } else {
+        FLEXCANb_MBn_CS(flexcanBase, buffer) = FLEXCAN_MB_CS_CODE(FLEXCAN_MB_CODE_TX_ONCE)
                                          | FLEXCAN_MB_CS_LENGTH(msg.len) | FLEXCAN_MB_CS_SRR | FLEXCAN_MB_CS_IDE;
+    }
   } else {
-    FLEXCANb_MBn_CS(flexcanBase, buffer) = FLEXCAN_MB_CS_CODE(FLEXCAN_MB_CODE_TX_ONCE)
+    if(msg.rtr) {
+        FLEXCANb_MBn_CS(flexcanBase, buffer) = FLEXCAN_MB_CS_CODE(FLEXCAN_MB_CODE_TX_ONCE)
+                                         | FLEXCAN_MB_CS_LENGTH(msg.len) | FLEXCAN_MB_CS_RTR;
+    } else {
+        FLEXCANb_MBn_CS(flexcanBase, buffer) = FLEXCAN_MB_CS_CODE(FLEXCAN_MB_CODE_TX_ONCE)
                                          | FLEXCAN_MB_CS_LENGTH(msg.len);
-  }
+    }
+  }    
 }
 
 void FlexCAN::readRxRegisters(CAN_message_t& msg, uint8_t buffer)
@@ -474,6 +488,7 @@ void FlexCAN::readRxRegisters(CAN_message_t& msg, uint8_t buffer)
   // get identifier and dlc
   msg.len = FLEXCAN_get_length(FLEXCANb_MBn_CS(flexcanBase, buffer));
   msg.ext = (FLEXCANb_MBn_CS(flexcanBase, buffer) & FLEXCAN_MB_CS_IDE)? 1:0;
+  msg.rtr = (FLEXCANb_MBn_CS(flexcanBase, buffer) & FLEXCAN_MB_CS_RTR)? 1:0;
   msg.id  = (FLEXCANb_MBn_ID(flexcanBase, buffer) & FLEXCAN_MB_ID_EXT_MASK);
   if(!msg.ext) {
     msg.id >>= FLEXCAN_MB_ID_STD_BIT_NO;

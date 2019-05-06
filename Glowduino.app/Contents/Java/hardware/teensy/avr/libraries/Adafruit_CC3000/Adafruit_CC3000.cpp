@@ -32,7 +32,6 @@
 #include "utility/socket.h"
 #include "utility/wlan.h"
 #include "utility/debug.h"
-#include "utility/sntp.h"
 
 uint8_t g_csPin, g_irqPin, g_vbatPin, g_IRQnum, g_SPIspeed;
 
@@ -1525,7 +1524,7 @@ size_t Adafruit_CC3000_Client::fastrprint(const __FlashStringHelper *ifsh)
   char _tx_buf[TXBUFFERSIZE];
   uint8_t idx = 0;
 
-  const char PROGMEM *p = (const char PROGMEM *)ifsh;
+  const char *p = (const char *)ifsh;
   size_t n = 0;
   while (1) {
     unsigned char c = pgm_read_byte(p++);
@@ -1653,7 +1652,7 @@ int Adafruit_CC3000_Client::available(void) {
   timeout.tv_sec = 0;
   timeout.tv_usec = 5000; // 5 millisec
 
-  int16_t s = select(_socket+1, &fd_read, NULL, NULL, &timeout);
+  int16_t s = select_CC3000(_socket+1, &fd_read, NULL, NULL, &timeout);
   //if (CC3KPrinter != 0) } CC3KPrinter->print(F("Select: ")); CC3KPrinter->println(s); }
   if (s == 1) return 1;  // some data is available to read
   else return 0;  // no data is available

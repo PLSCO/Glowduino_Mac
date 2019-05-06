@@ -1,6 +1,6 @@
 /* Teensyduino Core Library
  * http://www.pjrc.com/teensy/
- * Copyright (c) 2013 PJRC.COM, LLC.
+ * Copyright (c) 2017 PJRC.COM, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -121,6 +121,7 @@ void serial_begin(uint32_t divisor)
 		case 21: CORE_PIN21_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_PFE | PORT_PCR_MUX(3); break;
 		#if defined(KINETISL)
 		case 3:  CORE_PIN3_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_PFE | PORT_PCR_MUX(2); break;
+		case 25: CORE_PIN25_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_PFE | PORT_PCR_MUX(4); break;
 		#endif
 		#if defined(__MK64FX512__) || defined(__MK66FX1M0__)
 		case 27: CORE_PIN27_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_PFE | PORT_PCR_MUX(3); break;
@@ -131,12 +132,14 @@ void serial_begin(uint32_t divisor)
 		case 5:  CORE_PIN5_CONFIG = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(3); break;
 		#if defined(KINETISL)
 		case 4:  CORE_PIN4_CONFIG = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(2); break;
+		case 24: CORE_PIN24_CONFIG = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(4); break;
 		#endif
 		#if defined(__MK64FX512__) || defined(__MK66FX1M0__)
 		case 26: CORE_PIN26_CONFIG = PORT_PCR_DSE | PORT_PCR_SRE | PORT_PCR_MUX(3); break;
 		#endif
 	}
 #if defined(HAS_KINETISK_UART0)
+	if (divisor < 32) divisor = 32;
 	UART0_BDH = (divisor >> 13) & 0x1F;
 	UART0_BDL = (divisor >> 5) & 0xFF;
 	UART0_C4 = divisor & 0x1F;
@@ -150,6 +153,7 @@ void serial_begin(uint32_t divisor)
 	UART0_PFIFO = 0;
 #endif
 #elif defined(HAS_KINETISL_UART0)
+	if (divisor < 1) divisor = 1;
 	UART0_BDH = (divisor >> 8) & 0x1F;
 	UART0_BDL = divisor & 0xFF;
 	UART0_C1 = 0;
@@ -196,8 +200,30 @@ void serial_end(void)
 	while (transmitting) yield();  // wait for buffered data to send
 	NVIC_DISABLE_IRQ(IRQ_UART0_STATUS);
 	UART0_C2 = 0;
-	CORE_PIN0_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_MUX(1);
-	CORE_PIN1_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_MUX(1);
+	switch (rx_pin_num) {
+		case 0:  CORE_PIN0_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_MUX(1); break;
+		case 21: CORE_PIN21_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_MUX(1); break;
+		#if defined(KINETISL)
+		case 3:  CORE_PIN3_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_MUX(1); break;
+		case 25: CORE_PIN25_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_MUX(1); break;
+		#endif
+		#if defined(__MK64FX512__) || defined(__MK66FX1M0__)
+		case 27: CORE_PIN27_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_MUX(1); break;
+		#endif
+	}
+	switch (tx_pin_num & 127) {
+		case 1:  CORE_PIN1_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_MUX(1); break;
+		case 5:  CORE_PIN5_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_MUX(1); break;
+		#if defined(KINETISL)
+		case 4:  CORE_PIN4_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_MUX(1); break;
+		case 24: CORE_PIN24_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_MUX(1); break;
+		#endif
+		#if defined(__MK64FX512__) || defined(__MK66FX1M0__)
+		case 26: CORE_PIN26_CONFIG = PORT_PCR_PE | PORT_PCR_PS | PORT_PCR_MUX(1); break;
+		#endif
+	}
+	UART0_S1;
+	UART0_D; // clear leftover error status
 	rx_buffer_head = 0;
 	rx_buffer_tail = 0;
 	if (rts_pin) rts_deassert();
@@ -553,8 +579,11 @@ void uart0_status_isr(void)
 	}
 #else
 	if (UART0_S1 & UART_S1_RDRF) {
-		n = UART0_D;
-		if (use9Bits && (UART0_C3 & 0x80)) n |= 0x100;
+		if (use9Bits && (UART0_C3 & 0x80)) {
+			n = UART0_D | 0x100;
+		} else {
+			n = UART0_D;
+		}
 		head = rx_buffer_head + 1;
 		if (head >= SERIAL1_RX_BUFFER_SIZE) head = 0;
 		if (head != rx_buffer_tail) {

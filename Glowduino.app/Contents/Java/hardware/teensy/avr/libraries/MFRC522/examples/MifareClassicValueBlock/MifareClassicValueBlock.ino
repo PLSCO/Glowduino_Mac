@@ -17,7 +17,7 @@
  * Typical pin layout used:
  * -----------------------------------------------------------------------------------------
  *             MFRC522      Arduino       Arduino   Arduino    Arduino          Arduino
- *             Reader/PCD   Uno           Mega      Nano v3    Leonardo/Micro   Pro Micro
+ *             Reader/PCD   Uno/101       Mega      Nano v3    Leonardo/Micro   Pro Micro
  * Signal      Pin          Pin           Pin       Pin        Pin              Pin
  * -----------------------------------------------------------------------------------------
  * RST/Reset   RST          9             5         D9         RESET/ICSP-5     RST
@@ -31,8 +31,8 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
-#define RST_PIN         9           // Configurable, see typical pin layout above
-#define SS_PIN          10          // Configurable, see typical pin layout above
+constexpr uint8_t RST_PIN = 9;     // Configurable, see typical pin layout above
+constexpr uint8_t SS_PIN = 10;     // Configurable, see typical pin layout above
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 
@@ -98,7 +98,7 @@ void loop() {
     MFRC522::StatusCode status;
     byte buffer[18];
     byte size = sizeof(buffer);
-    long value;
+    int32_t value;
 
     // Authenticate using key A
     Serial.println(F("Authenticating using key A..."));
@@ -166,8 +166,8 @@ void loop() {
     // Check if it matches the desired access pattern already;
     // because if it does, we don't need to write it again...
     if (    buffer[6] != trailerBuffer[6]
-        &&  buffer[7] != trailerBuffer[7]
-        &&  buffer[8] != trailerBuffer[8]) {
+        ||  buffer[7] != trailerBuffer[7]
+        ||  buffer[8] != trailerBuffer[8]) {
         // They don't match (yet), so write it to the PICC
         Serial.println(F("Writing new sector trailer..."));
         status = mfrc522.MIFARE_Write(trailerBlock, trailerBuffer, 16);

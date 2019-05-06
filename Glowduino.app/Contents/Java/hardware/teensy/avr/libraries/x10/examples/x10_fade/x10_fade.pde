@@ -13,7 +13,6 @@
 
 
 #include <x10.h>
-#include <x10constants.h>
 
 #define zcPin 2
 #define dataPin 3
@@ -24,7 +23,7 @@ x10 myHouse =  x10(zcPin, dataPin);
 void setup() {
   Serial.begin(9600);
   // send a "Lights ON" command 3 times:
-   myHouse.write(A, ON,3);
+   myHouse.write(HOUSE_A, ON, 3);
 }
 
 void loop() {
@@ -32,11 +31,11 @@ void loop() {
   // send a "lights BRIGHT" command 19 times.
   // it takes 19 BRIGHT or DIM commands to get
   // an incandescent lamp dim or bright.
-  myHouse.write(A, BRIGHT,19);
+  myHouse.write(HOUSE_A, BRIGHT, 19);
 
   delay(500);
   Serial.println("Lights down:");
   // send a "lights DIM" command 19 times:
-  myHouse.write(A, DIM,19);
+  myHouse.write(HOUSE_A, DIM, 19);
   delay(500);
 }

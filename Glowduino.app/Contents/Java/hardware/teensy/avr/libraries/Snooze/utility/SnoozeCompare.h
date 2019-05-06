@@ -30,7 +30,6 @@
 #ifndef SnoozeCompare_h
 #define SnoozeCompare_h
 
-#include "Arduino.h"
 #include "SnoozeBlock.h"
 
 class SnoozeCompare : public SnoozeBlock {
@@ -40,6 +39,10 @@ private:
     virtual void clearIsrFlags( void );
     static void isr( void );
     void ( * return_cmp0_irq ) ( void );
+#if defined(KINETISK)
+    void ( * return_cmp1_irq ) ( void );
+    void ( * return_cmp2_irq ) ( void );
+#endif
     float  threshold_crossing;
     uint8_t return_priority_cmp0;
     uint8_t pin;
@@ -57,7 +60,17 @@ private:
     uint32_t CSR;
     bool SIM_SCGC5_clock_active;
 #endif
-    volatile uint32_t return_core_pin_config[2];
+#if defined(KINETISK)
+    volatile uint32_t return_core_pin_config[3];
+#else
+    volatile uint32_t return_core_pin_config[1];
+#endif
+    static volatile uint8_t *cmpx_cr0;//CMP0_CR0;
+    static volatile uint8_t *cmpx_cr1;//CMP0_CR1;
+    static volatile uint8_t *cmpx_scr;//CMP0_SCR;
+    static volatile uint8_t *cmpx_fpr;//CMP0_FPR;
+    static volatile uint8_t *cmpx_muxcr;//CMP0_MUXCR;
+    static volatile uint8_t *cmpx_daccr;//CMP0_DACCR;
 public:
     SnoozeCompare( void ) {
 #if defined(__MKL26Z64__) || defined(__MK66FX1M0__)

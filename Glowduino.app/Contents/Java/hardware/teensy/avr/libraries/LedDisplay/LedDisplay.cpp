@@ -5,6 +5,7 @@
    
    Revisions on version 0.2 and 0.3 by Mark Liebman, 27 Jan 2010
     * extended a bit to support up to four (4) 8 character displays.
+   vim: set ts=4:
   
   Controls an Avago HCMS29xx display. This display has 8 characters, each 5x7 LEDs
    
@@ -31,33 +32,36 @@
 #include "font5x7.h"
 // The font library is stored in program memory:
 #include <avr/pgmspace.h>
-#include <string.h> 
+#include <string.h>
 
 /*
  * 	Constructor.  Initializes the pins and the instance variables.
  */
-LedDisplay::LedDisplay(uint8_t _dataPin, 
-					   uint8_t _registerSelect, 
-					   uint8_t _clockPin, 
-					   uint8_t _chipEnable, 
-					   uint8_t _resetPin, 
+LedDisplay::LedDisplay(uint8_t _dataPin,
+					   uint8_t _registerSelect,
+					   uint8_t _clockPin,
+					   uint8_t _chipEnable,
+					   uint8_t _resetPin,
 					   uint8_t _displayLength)
 {
 	// Define pins for the LED display:
 	this->dataPin = _dataPin;         			// connects to the display's data in
-	this->registerSelect = _registerSelect;   	// the display's register select pin 
+	this->registerSelect = _registerSelect;   	// the display's register select pin
 	this->clockPin = _clockPin;        			// the display's clock pin
 	this->chipEnable = _chipEnable;       		// the display's chip enable pin
 	this->resetPin = _resetPin;         		// the display's reset pin
 	this->displayLength = _displayLength;    	// number of bytes needed to pad the string
 	this->cursorPos = 0;						// position of the cursor in the display
-	char stringBuffer[displayLength+1];			// default array that the displayString will point to
-	
+
+	// do not allow a long multiple display to use more than LEDDISPLAY_MAXCHARS
+	if (_displayLength > LEDDISPLAY_MAXCHARS) {
+		_displayLength = LEDDISPLAY_MAXCHARS;
+	}
+
 	// fill stringBuffer with spaces, and a trailing 0:
-	for (int i = 0; i < displayLength; i++) {
+	for (unsigned int i = 0; i < sizeof(stringBuffer); i++) {
 		stringBuffer[i] = ' ';
 	}
-	stringBuffer[displayLength] = '\0';
 	
 	this->setString(stringBuffer);				// give displayString a default buffer
 }
@@ -65,7 +69,7 @@ LedDisplay::LedDisplay(uint8_t _dataPin,
 /*
  * 	Initialize the display.
  */
- 
+
 void LedDisplay::begin() {
  // set pin modes for connections:
   pinMode(dataPin, OUTPUT);
@@ -82,33 +86,19 @@ void LedDisplay::begin() {
   // load dot register with lows
   loadDotRegister();
 
-  loadControlRegister(B10000001); // set serial mode. see table 1, footnote 1
   // set control register 0 for max brightness, and no sleep:
-  // added: ML send multiple inits to 2nd, 3rd, 4th display, etc.
-  // set control register 0 for max brightness, and no sleep:
-  loadControlRegister(B01111111);
-  loadControlRegister(B01111111);
-  loadControlRegister(B01111111);
-  loadControlRegister(B01111111);
-  loadControlRegister(B01111111);
-  loadControlRegister(B01111111);
-  loadControlRegister(B01111111);
-  // set control register 1 so all 8 characters display:
- // loadControlRegister(B10000001); 
-
-
-
+  loadAllControlRegisters(B01111111);
 }
 
 /*
  * 	Clear the display
  */
- 
+
 void LedDisplay::clear() {
- for (int displayPos = 0; displayPos < displayLength; displayPos++) {
- 	char charToShow = ' ';
-	  // put the character in the dot register:
-	writeCharacter(charToShow, displayPos);  
+	this->setString(stringBuffer);
+	for (int displayPos = 0; displayPos < displayLength; displayPos++) {
+		// put the character in the dot register:
+		writeCharacter(' ', displayPos);
 	}
 
 	// send the dot register array out to the display:
@@ -153,9 +143,11 @@ void LedDisplay::write(uint8_t b) {
 	if (cursorPos >= 0 && cursorPos < displayLength) {	
 		// put the character into the dot register:
 		writeCharacter(b, cursorPos);
-		// put the character into the displayString:
-		if (cursorPos < this->stringLength()) {
-			this->displayString[cursorPos] = b;
+		// put the character into the displayBuffer
+		// but do not write the string constants pass
+		// to us from the user by setString()
+		if (this->displayString == stringBuffer && cursorPos < LEDDISPLAY_MAXCHARS) {
+			stringBuffer[cursorPos] = b;
 		}		
 		cursorPos++;	
 		// send the dot register array out to the display:
@@ -173,26 +165,25 @@ void LedDisplay::write(uint8_t b) {
 
 
 void LedDisplay::scroll(int direction) {
-	clear();
 	cursorPos += direction;
+	//  length of the string to display:
+	int stringEnd = strlen(displayString);
+
 	// Loop over the string and take displayLength characters to write to the display:
    	for (int displayPos = 0; displayPos < displayLength; displayPos++) {
 	  // which character in the strings you want:
 	  int whichCharacter =  displayPos - cursorPos;
-	  //  length of the string to display:
-	  int stringEnd = strlen(displayString);
 	 // which character you want to show from the string:
-	  char charToShow; 
+	  char charToShow;
 	  // display the characters until you have no more:
 	  if ((whichCharacter >= 0) && (whichCharacter < stringEnd)) {
-		charToShow = displayString[whichCharacter]; 
-	  } 
-	  // if none of the above, show a space:
-	  else {
+		charToShow = displayString[whichCharacter];
+	  } else {
+	    // if none of the above, show a space:
 		charToShow = ' ';
 	  }
 	  // put the character in the dot register:
-	  writeCharacter(charToShow, displayPos);  
+	  writeCharacter(charToShow, displayPos);
 	}
 	// send the dot register array out to the display:
 	loadDotRegister();
@@ -203,7 +194,7 @@ void LedDisplay::scroll(int direction) {
  * 	set displayString
  */
 
-void LedDisplay::setString(char* _displayString)  {
+void LedDisplay::setString(const char * _displayString)  {
 	this->displayString = _displayString;
 }
 
@@ -212,7 +203,7 @@ void LedDisplay::setString(char* _displayString)  {
  * 	return displayString
  */
 
-char* LedDisplay::getString() {
+const char * LedDisplay::getString() {
 	return displayString;
 }
 
@@ -233,10 +224,15 @@ int LedDisplay::stringLength() {
  */
 
 	
-void LedDisplay::setBrightness(uint8_t bright) 
+void LedDisplay::setBrightness(uint8_t bright)
 {
-	// set the brightness:
-	loadControlRegister(B01110000 + bright);    
+    // Limit the brightness
+    if (bright > 15) {
+        bright = 15;
+    }
+  
+    // set the brightness:
+    loadAllControlRegisters(B01110000 + bright);
 }
 
 
@@ -258,7 +254,7 @@ void LedDisplay::writeCharacter(char whatCharacter, byte whatPosition) {
 
 
 // This method sends 8 bits to one of the control registers:
-void LedDisplay::loadControlRegister(int dataByte) {
+void LedDisplay::loadControlRegister(uint8_t dataByte) {
   // select the control registers:
   digitalWrite(registerSelect, HIGH);
   // enable writing to the display:
@@ -267,6 +263,36 @@ void LedDisplay::loadControlRegister(int dataByte) {
   shiftOut(dataPin, clockPin, MSBFIRST, dataByte);
   // disable writing:
   digitalWrite(chipEnable, HIGH);
+}
+
+// This method sends 8 bits to the control registers in all chips:
+void LedDisplay::loadAllControlRegisters(uint8_t dataByte) {
+
+  // Each display can have more than one control chip, and displays
+  // can be daisy-chained into long strings. For some operations, such
+  // as setting the brightness, we need to ensure that a single
+  // control word reaches all displays simultaneously. We do this by
+  // putting each chip into simultaneous mode - effectively coupling
+  // all their data-in pins together. (See section "Serial/Simultaneous
+  // Data Output D0" in datasheet.)
+
+
+  // One chip drives four characters, so we compute the number of
+  // chips by diving by four:
+  int chip_count = displayLength / 4;
+
+  // For each chip in the chain, write the control word that will put
+  // it into simultaneous mode (seriel mode is the power-up default).
+  for (int i = 0; i < chip_count; i++) {
+    loadControlRegister(B10000001);
+  }
+
+  // Load the specified value into the control register.
+  loadControlRegister(dataByte);
+
+  // Put all the chips back into serial mode. Because they're still
+  // all in simultaneous mode, we only have to write this word once.
+  loadControlRegister(B10000000);
 }
 
 // this method originally sent 320 bits to the dot register: 12_30_09 ML

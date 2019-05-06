@@ -126,9 +126,11 @@
 // configuration for sed1520 basaed vk5121 120x32 display with pinout diagram
 //#define GLCDCFG_GLCDCONFIG "config/sed1520/ManualConfig_sed1520-vk5121_Panel.h"
 
+// configuration for sed1520 basaed EA DIP180-5e 180x32 display with pinout diagram
+//#define GLCDCFG_GLCDCONFIG "config/sed1520/ManualConfig_sed1520-EADIP180-5_Panel.h"
+
 // generic sed1520 configuration (may required some amount of editing before using)
 //#define GLCDCFG_GLCDCONFIG "config/sed1520/ManualConfig_sed1520_Panel.h"
-
 
 /*
  * For s/w development debugging
@@ -137,6 +139,8 @@
 //#define GLCDCFG_GLCDCONFIG "build/debug/bap/config/Modvk5121_AutoConfig_Config.h"
 //#define GLCDCFG_GLCDCONFIG "build/debug/bap/config/Modagm1264f_AutoConfig_Config.h"
 //#define GLCDCFG_GLCDCONFIG "build/debug/bap/config/Modagm1264f_TeensyBB128_Config.h"
+//#define GLCDCFG_GLCDCONFIG "build/debug/bap/config/ModDualvk5121_TeensyBB_Config.h"
+
 
 
 /*========================== Optional User Defines ==================================*/
@@ -187,11 +191,11 @@
                                 // return an error.
 
 //#define GLCDCFG_FORCE_CORECODE // Forces library to use generic i/o routines rather than
-				// faster direct port i/o routines
-				// The config file used when in CORECODE mode is 
-				// config/{PANELNAME}/PinConfig_{PANELNAME}-CoreCode.h
-				// While much slower, this mode can be useful if there
-				// are direct port i/o mapping issues.
+                                 // faster direct port i/o routines
+                                 // The config file used when in CORECODE mode is 
+                                 // config/{PANELNAME}/PinConfig_{PANELNAME}-CoreCode.h
+                                 // While much slower, this mode can be useful if there
+                                 // are direct port i/o mapping issues.
 
 /*========================== End of Optional User Defines ==================================*/
 

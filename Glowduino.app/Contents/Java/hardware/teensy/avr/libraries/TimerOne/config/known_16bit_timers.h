@@ -69,6 +69,14 @@
   #define TIMER3_B_PIN   4
   #define TIMER3_ICP_PIN 4
 
+// Teensy 4
+//
+#elif defined(__IMXRT1052__) || defined(__IMXRT1062__)
+  #define TIMER1_A_PIN   6
+  #define TIMER1_B_PIN   7
+  #define TIMER3_A_PIN   8
+  #define TIMER3_B_PIN   9
+
 // Arduino Mega
 //
 #elif defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
@@ -101,12 +109,20 @@
 
 //  Uno, Duemilanove, LilyPad, etc
 //
-#elif defined (__AVR_ATmega168__) || defined (__AVR_ATmega328P__)
+#elif defined (__AVR_ATmega168__) || defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__) ||  defined (__AVR_ATmega8__)
   #define TIMER1_A_PIN   9
   #define TIMER1_B_PIN   10
   #define TIMER1_ICP_PIN 8
   #define TIMER1_CLK_PIN 5
 
+  //  attiny167
+//
+#elif defined (__AVR_ATtiny167__)
+  #define TIMER1_A_PIN   14
+  #define TIMER1_B_PIN   11
+  //#define TIMER1_ICP_PIN 8
+  //#define TIMER1_CLK_PIN 5
+  
 // Sanguino
 //
 #elif defined(__AVR_ATmega644P__) || defined(__AVR_ATmega644__)
@@ -138,7 +154,7 @@
 
 // Mighty-1284 - Maniacbug
 //
-#elif defined(__AVR_ATmega1284P__)
+#elif defined(__AVR_ATmega1284P__) || defined(__AVR_ATmega1284__)
   #define TIMER1_A_PIN   12  // PD5
   #define TIMER1_B_PIN   13  // PD4
   #define TIMER1_ICP_PIN 14  // PD6

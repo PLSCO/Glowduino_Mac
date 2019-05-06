@@ -1,3 +1,49 @@
+><b>Updated (11/20/18 v6.3.3)</b><br>
+* Added F_CPU 256MHz.<br>
+
+><b>Updated (11/4/17 v6.3.2)</b><br>
+* TeensyLC SnoozeSleepPWM example now works.<br>
+* Warning: now TeensyLC Internal Ref Clock is enabled, might lead to higher sleep currents.<br>
+
+><b>Updated (9/5/17 v6.3.1)</b><br>
+* Fixed compare for TeensyLC<br>
+* Removed Wire library include from SnoozeAudio<br>
+
+><b>Updated (8/30/17 v6.3.0)</b><br>
+* Fixed examples "compare driver", thanks Erik-k -> https://github.com/Erik-k.<br>
+* Audio Driver for ADC, DAC, STGL5000.<br>
+* add SPI Driver.<br>
+* added clock transistion -> pee_bple and blpe_pee.<br>
+* fixed VLLS3-1, was only using VLLS3.<br>
+* alarm driver function name change.<br>
+* fixed actual Compare Driver, added pins 9 and 4, pin 12 is not a valid pin.<br>
+
+><b>Updated (3/27/17 v6.2.9)</b><br>
+* Fixed USB Serial driver for none USB_SERIAL type.<br>
+* Fixed return clock from sleep mode at 24MHz.<br>
+* Fixed typo in sleep_usb_serial.ino example.<br>
+
+><b>Updated (2/20/17 v6.2.8)</b><br>
+* Re-added support for Teensy 3.0.<br>
+
+><b>Updated (2/16/17 v6.2.7)</b><br>
+* Fixed sleep functions not returning right wakeup values.<br>
+* Updated examples.<br>
+* Added Teensy LC LED buffer driver.<br>
+* Usb works better now not perfect though.<br>
+
+><b>Updated (1/31/17 v6.2.6)</b><br>
+* Fixed T3.6 High Speed Run deepSleep and hibernate.<br>
+* Timer driver only uses the LPO clock.<br>
+
+><b>Updated (1/4/17 v6.2.5)</b><br>
+* Added Serial USB Driver.<br>
+* Added PWM Sleep Driver example.<br>
+
+><b>Updated (10/18/16 v6.2.4)</b><br>
+* Fix bug with Teensy LC digital driver.<br>
+* Update README.md links.<br>
+
 ><b>Updated (10/18/16 v6.2.3)</b><br>
 * Temp fix for Teensy LC Timer driver below 50ms.<br>
 

@@ -28,12 +28,14 @@
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)
   #define CAPTURE_USE_TIMER1       // ICP1 is pin 8
 
-// Teensy 3.1
+// Teensy 3.1, 3.2, 3.5, 3.6
 #elif defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__)
   #define CAPTURE_USE_FTM1_CH0 3    // FTM1 CH0 is pin 3
   //#define CAPTURE_USE_FTM1_CH1 4  // FTM1 CH1 is pin 4
-  //#define CAPTURE_USE_FTM2_CH0 32 // FTM2 CH0 is pin 32
-  //#define CAPTURE_USE_FTM2_CH1 25 // FTM2 CH1 is pin 25
+  //#define CAPTURE_USE_FTM2_CH0 32 // FTM2 CH0 is pin 32 (Teensy 3.1 and 3.2)
+  //#define CAPTURE_USE_FTM2_CH1 25 // FTM2 CH1 is pin 25 (Teensy 3.1 and 3.2)
+  //#define CAPTURE_USE_FTM2_CH0 29 // FTM2 CH0 is pin 29 (Teensy 3.5 and 3.6)
+  //#define CAPTURE_USE_FTM2_CH1 30 // FTM2 CH1 is pin 30 (Teensy 3.5 and 3.6)
 
 // Teensy 3.0
 #elif defined(__MK20DX128__)
@@ -46,6 +48,9 @@
   //#define CAPTURE_USE_FTM1_CH1 17 // FTM1 CH1 is pin 17
   //#define CAPTURE_USE_FTM2_CH0 3  // FTM2 CH0 is pin 3
   //#define CAPTURE_USE_FTM2_CH1 4  // FTM2 CH1 is pin 4
+
+#elif defined(__IMXRT1052__) || defined(__IMXRT1062__)
+  #define CAPTURE_USE_FLEXPWM4_CH0A 22 // FlexPWM CH0-A is pin 22
 
 // Teensy 2.0
 #elif defined(__AVR_ATmega32U4__)
@@ -327,6 +332,63 @@ static inline void capture_shutdown(void)
 	NVIC_DISABLE_IRQ(IRQ_FTM2);
 }
 
+#elif defined(CAPTURE_USE_FLEXPWM4_CH0A)
+
+#define FTM_ISR_NAME flexpwm_4_0_isr
+void flexpwm_4_0_isr(void);
+
+static inline void capture_init(void)
+{
+	FLEXPWM4_FCTRL0 |= FLEXPWM_FCTRL0_FLVL(1);
+	FLEXPWM4_FSTS0 = 0x0001;
+	FLEXPWM4_MCTRL |= FLEXPWM_MCTRL_CLDOK(1);
+	FLEXPWM4_SM0CTRL2 = FLEXPWM_SMCTRL2_INDEP;
+	FLEXPWM4_SM0CTRL = FLEXPWM_SMCTRL_HALF;
+	FLEXPWM4_SM0INIT = 0;
+	FLEXPWM4_SM0VAL0 = 0;
+	FLEXPWM4_SM0VAL1 = 65535;
+	FLEXPWM4_SM0VAL2 = 0;
+	FLEXPWM4_SM0VAL3 = 0;
+	FLEXPWM4_SM0VAL4 = 0;
+	FLEXPWM4_SM0VAL5 = 0;
+	FLEXPWM4_MCTRL |= FLEXPWM_MCTRL_LDOK(1) | FLEXPWM_MCTRL_RUN(1);
+	attachInterruptVector(IRQ_FLEXPWM4_0, flexpwm_4_0_isr);
+	NVIC_SET_PRIORITY(IRQ_FLEXPWM4_0, 48);
+	FLEXPWM4_SM0INTEN = FLEXPWM_SMINTEN_CA0IE | FLEXPWM_SMINTEN_RIE;
+}
+static inline void capture_start(void)
+{
+	FLEXPWM4_SM0CAPTCTRLA = FLEXPWM_SMCAPTCTRLA_EDGA0(2) | FLEXPWM_SMCAPTCTRLA_ARMA;
+	IOMUXC_SW_MUX_CTL_PAD_GPIO_AD_B1_08 = 1 | 0x10; // pin 22, AD_B1_08, FLEXPWM4_PWM0_A
+	IOMUXC_FLEXPWM4_PWMA0_SELECT_INPUT = 1;
+	FLEXPWM4_SM0STS = FLEXPWM_SMSTS_CFA0 | FLEXPWM_SMSTS_RF;
+	NVIC_ENABLE_IRQ(IRQ_FLEXPWM4_0);
+}
+static inline uint16_t capture_event(void)
+{
+	return (FLEXPWM4_SM0STS & FLEXPWM_SMSTS_CFA0) ? 1 : 0;
+}
+static inline uint32_t capture_read(void)
+{
+	uint32_t val = FLEXPWM4_SM0CVAL2;
+	FLEXPWM4_SM0STS = FLEXPWM_SMSTS_CFA0;
+	return val;
+}
+static inline uint8_t capture_overflow(void)
+{
+	return (FLEXPWM4_SM0STS & FLEXPWM_SMSTS_RF) ? 1 : 0;
+}
+static inline void capture_overflow_reset(void)
+{
+	FLEXPWM4_SM0STS = FLEXPWM_SMSTS_RF;
+}
+static inline void capture_shutdown(void)
+{
+	FLEXPWM4_SM0INTEN = 0;
+	FLEXPWM4_SM0CAPTCTRLA = 0;
+	IOMUXC_SW_MUX_CTL_PAD_GPIO_AD_B1_08 = 5 | 0x10;
+	NVIC_DISABLE_IRQ(IRQ_FLEXPWM4_0);
+}
 
 #elif defined(CAPTURE_USE_TIMER1)
 

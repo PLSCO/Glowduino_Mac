@@ -12,11 +12,12 @@ An SD bmp image load example. (extracted and modded by Adafruit old library http
 
 #include <SPI.h>
 #include <SdFat.h>
+#include <Adafruit_GFX.h>
 #include <TFT_ILI9163C.h>
 
 //PINS
-#define __CS1 	10
-#define __DC 	9
+#define __CS 10
+#define __DC 9
 #define __SDCS 2
 
 // This function opens a Windows Bitmap (BMP) file and
@@ -30,18 +31,12 @@ An SD bmp image load example. (extracted and modded by Adafruit old library http
 
 boolean SDInited = true;
 
-#if defined(TFT_ILI9163C_INSTANCES)
-TFT_ILI9163C tft = TFT_ILI9163C(REDPCB_NEW, __CS1, __DC);
-#else
-TFT_ILI9163C tft = TFT_ILI9163C(__CS1, __DC);
-#endif
+TFT_ILI9163C tft = TFT_ILI9163C(__CS, __DC);
 SdFat SD;
 SdFile myFile;
 
 void setup(void) {
-  Serial.begin(38400);
-  long unsigned debug_start = millis ();
-  while (!Serial && ((millis () - debug_start) <= 5000)) ;
+  Serial.begin(9600);
 
   tft.begin();
   //tft.setRotation(2);
@@ -84,7 +79,7 @@ void bmpDraw(const char *filename, uint8_t x, uint16_t y) {
     if((x >= tft.width()) || (y >= tft.height())) return;
 
     // Open requested file on SD card
-    if ((bmpFile = SD.open(filename)) == NULL) {
+    if ((bmpFile = SD.open(filename)) == false) {
       tft.setCursor(0,0);
       tft.print("file not found!");
       return;

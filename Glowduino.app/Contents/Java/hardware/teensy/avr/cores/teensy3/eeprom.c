@@ -1,6 +1,6 @@
 /* Teensyduino Core Library
  * http://www.pjrc.com/teensy/
- * Copyright (c) 2016 PJRC.COM, LLC.
+ * Copyright (c) 2017 PJRC.COM, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -27,6 +27,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+// To configure the EEPROM size, edit E2END in avr/eeprom.h.
+//
+// Do *NOT* edit EEPROM_SIZE in this file.  It will automatically
+// change based on your changes to E2END in avr/eeprom.h.
+//
+// Generally you should avoid editing this code, unless you really
+// know what you're doing.
 
 #include "kinetis.h"
 #include <avr/eeprom.h>

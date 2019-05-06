@@ -4616,7 +4616,7 @@ void RA8875::gPrint(uint16_t x,uint16_t y,const char *in,uint16_t color,uint8_t 
 			for (s=0;s<scale;s++){//scaling
 				int16_t nX = (x+allwidth)+(w*scale);
 				if (nX > _width) return;
-				if (h*scale > _height) return;
+				if ((int16_t)(h*scale) > _height) return;
 				setXY(x+allwidth,idy+y+(j/NrBytes)-j);
 				writeCommand(RA8875_MRWC);
 				startSend();
@@ -4774,12 +4774,9 @@ uint8_t RA8875::getKey(void)
     static uint8_t count = 0;
     uint8_t col, row;
     uint8_t key;
-	/*	
-    while (!keypadTouched()) {
-		delayMicroseconds(10);//10
-    }
-	*/
-	/*
+    //while (!keypadTouched()) {
+    //    delayMicroseconds(10);//10
+    //}
     // read the key press number
     uint8_t keyNumReg = readReg(RA8875_KSCR2) & 0x03;
     count++;

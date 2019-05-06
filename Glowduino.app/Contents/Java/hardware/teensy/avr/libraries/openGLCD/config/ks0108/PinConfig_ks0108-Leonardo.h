@@ -26,10 +26,12 @@
 
 /*
  * Pins can be assigned using Arduino pin numbers 0-n
- * Pins can also be assigned using PIN_Pb 
+ * Pins can also be assigned using AVRPIN_Pb 
  *    where P is port A-L and b is bit 0-7
- *    Example: port D bit 3 is PIN_D3
+ *    Example: port D bit 3 is AVRPIN_D3
  *
+ * Pins can also be assigned using 0xPb for ports A to F
+ *     Example: port D bit 3 is 0xD3
  */
 
 /* Data pin definitions

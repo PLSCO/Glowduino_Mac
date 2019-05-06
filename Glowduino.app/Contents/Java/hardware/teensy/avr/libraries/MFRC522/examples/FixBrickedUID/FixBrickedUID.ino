@@ -12,7 +12,7 @@
  * Typical pin layout used:
  * -----------------------------------------------------------------------------------------
  *             MFRC522      Arduino       Arduino   Arduino    Arduino          Arduino
- *             Reader/PCD   Uno           Mega      Nano v3    Leonardo/Micro   Pro Micro
+ *             Reader/PCD   Uno/101       Mega      Nano v3    Leonardo/Micro   Pro Micro
  * Signal      Pin          Pin           Pin       Pin        Pin              Pin
  * -----------------------------------------------------------------------------------------
  * RST/Reset   RST          9             5         D9         RESET/ICSP-5     RST
@@ -24,11 +24,13 @@
 
 #include <SPI.h>
 #include <MFRC522.h>
+#include <MFRC522Hack.h>
 
-#define RST_PIN   9     // Configurable, see typical pin layout above
-#define SS_PIN    10    // Configurable, see typical pin layout above
+constexpr uint8_t RST_PIN = 9;     // Configurable, see typical pin layout above
+constexpr uint8_t SS_PIN = 10;     // Configurable, see typical pin layout above
 
-MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance
+MFRC522 mfrc522(SS_PIN, RST_PIN);  // Create MFRC522 instance.
+MFRC522Hack mfrc522Hack(&mfrc522);  // Create MFRC522Hack instance.
 
 MFRC522::MIFARE_Key key;
 
@@ -46,7 +48,7 @@ void setup() {
 }
 
 void loop() {
-  if ( mfrc522.MIFARE_UnbrickUidSector(false) ) {
+  if ( mfrc522Hack.MIFARE_UnbrickUidSector(false) ) {
     Serial.println(F("Cleared sector 0, set UID to 1234. Card should be responsive again now."));
   }
   delay(1000);

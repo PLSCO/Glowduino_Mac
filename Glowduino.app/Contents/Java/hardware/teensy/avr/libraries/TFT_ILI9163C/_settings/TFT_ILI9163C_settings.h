@@ -1,151 +1,107 @@
 #ifndef _TFT_ILI9163C_USETT_H_
 #define _TFT_ILI9163C_USETT_H_
-/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-									USER SETTINGS
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-/*--------------------------------------------------------------------------------
-Allow multiple instances ..........................
-Do you need more than one display at the same time?
-By comment out the define the library will use more resources but you will able to have 2 or more display
-in the same time by sharing all pins apart CS and DC! (On Teensy 3.x DC can be shared)
-Since this will use slight more code (all init code, but fonts and images will be shared)
-you should enable this only if you really need if you have a CPU with small resources!
-Default: commented (disabled)
-----------------------------------------------------------------------------------*/
-//#define TFT_ILI9163C_INSTANCES		
-/*--------------------------------------------------------------------------------
-Select your display here (ONLY when TFT_ILI9163C_INSTANCES commented, otherwise has no effect)
-You have a RED PCB, BLACK PCB or what?
-Note: If you have enabled Multiple Instances option this will be ignored since you should select your display
-in the instance!
-Default: #include "../_display/TFT_ILI9163C_RED_PCB_OLD.h"
-(uncomment just one below...)
-----------------------------------------------------------------------------------*/
-#if !defined (TFT_ILI9163C_INSTANCES)
-	//#include "../_display/TFT_ILI9163C_BLACK_PCB.h"
-	//#include "../_display/TFT_ILI9163C_RED_PCB_OLD.h"
-	#include "../_display/TFT_ILI9163C_RED_PCB_YPIN.h"//the infamous 2016 yellow pin/red pcb one
-	
-	//you can add further display files here but remember to add in TFT_ILI9163C_ALL.h as well
-	
-	//do not touch this, is for lazy people that forget that just one include allowed!
-	#if defined(_TFT_ILI9163C_RED_PCB_OLD_H) && defined(_TFT_ILI9163C_RED_PCB_YPIN_H) || \
-	defined(_TFT_ILI9163C_RED_PCB_YPIN_H) && defined(_TFT_ILI9163C_BLACK_PCB_1_H) || \
-	defined(_TFT_ILI9163C_BLACK_PCB_1_H) && defined(_TFT_ILI9163C_RED_PCB_OLD_H) || \
-	defined(_TFT_ILI9163C_RED_PCB_OLD_H) && defined(_TFT_ILI9163C_RED_PCB_YPIN_H) && defined(_TFT_ILI9163C_BLACK_PCB_1_H)
-		#error "only one display included allowed! Please correct!"
-	#endif
-#endif
-/*--------------------------------------------------------------------------------
-- Size Reducing (decrease slight performances) -
-Ignored for Teensy 3.x, DUE
-Small CPU like UNO have very small resources and code optimizations uses lot of.
-Uncomment _ILI9163C_SIZEOPTIMIZER will decrease space needed by code but some performance
-will suffer a bit, however it can be usefult in many cases!
-Default:uncommented (automatically enabled for some CPU)
-----------------------------------------------------------------------------------*/
-#if !defined(__MK20DX128__) && !defined(__MK20DX256__) && !defined(__SAM3X8E__) && !defined(__MK64FX512__) && !defined(__MK66FX1M0__)// && !defined(ESP8266)
-#define _ILI9163C_SIZEOPTIMIZER			
-#endif		
-/*--------------------------------------------------------------------------------
-- Default Display Rotation -
-This parameter can be changed in your code but here you can force orientation
-Default:0
-----------------------------------------------------------------------------------*/
-#define _ILI9163C_ROTATION			0
-/*--------------------------------------------------------------------------------
-- Default Font -
-From version 1.0p7 user can choose here witch font to use as default and even avoid any font.
-To change default font, you must:
-	_ILI9163C_DEF_FONT_PATH "the complete path of the font" (default:"_fonts/defaultFont.c")
-	_ILI9163C_DEF_FONT_NAME	the_unique_name_of_the_font (default:defaultFont)
-To avoid any font, just uncomment the 2 defines and a blank font will be loaded (almost 0 resources)
-Default: (defaultFont = arial_2x)
-#define _ILI9163C_DEF_FONT_PATH			"_fonts/defaultFont.c"
-#define _ILI9163C_DEF_FONT_NAME			defaultFont
-----------------------------------------------------------------------------------*/
-#define _ILI9163C_DEF_FONT_PATH			"_fonts/defaultFont.c"
-#define _ILI9163C_DEF_FONT_NAME			defaultFont
-/*--------------------------------------------------------------------------------
-- Default Background Color & Default Foreground Color -
-When display turns on, it will set the defaul background and foreground.
-the default background and foreground affects several other function
-when you forget to assign color, for example clearScreen() will clear screen to black
-Assigning setBackground(0xF800), red, will result in a red screen when cleared.
-Default:BLACK & WHITE
-----------------------------------------------------------------------------------*/
-#define _ILI9163C_BACKGROUND		BLACK
-#define _ILI9163C_FOREGROUND		WHITE
-/*--------------------------------------------------------------------------------
-- Teensy LC Fast CS Port option -
-Teensy LC optional Direct Port vs digitalWriteFast methods
-If you have any issues ONLY with Teensy LC and other SPI devices that share
-the same SPI lines try to comment the line nelow...
-The library default uses Direct Port Manipulation (that it's slight faster)
-Default:uncommented
-----------------------------------------------------------------------------------*/
-#if defined(__MKL26Z64__)
-	#define _TEENSYLC_FASTPORT	
-#endif
-/*--------------------------------------------------------------------------------
-- ESP8266 Faster SPI -
-This force library to use the SPI.write method instead the legacy SPI.transfer.
-As result is much faster. (Thanks Reaper7)
-Default:uncommented
-----------------------------------------------------------------------------------*/
-#if defined(ESP8266)
-	#define _ESP8266_SPIFAST	
-#endif
-/*--------------------------------------------------------------------------------
-- ESP8266 Compatibility mode -
-This force library to use an alternative way to trigger ESP8266 GPIO, if you uncomment
-the line it will use the standard digitaWrite wich is slow, this help debugging.
-NOTE: uncomment this, code is MUCH slower!
-Default:commented
-----------------------------------------------------------------------------------*/
-#if defined(ESP8266)
-	//#define _ESP8266_STANDARDMODE	
-#endif
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-/*---------------------------------------------------------------------------------
- 							 END OF USER SETTINGS
-----------------------------------------------------------------------------------*/
-//due a bug is ESP8266 GPIO handle, using TFT_ILI9163C_INSTANCES in ESP8266
-//need the use of standard GPIO access. This limit speed but it's the only way
-//to fix the issue and it's temporary until I find a solution.
-#if defined(ESP8266) && defined(TFT_ILI9163C_INSTANCES) && !defined(_ESP8266_STANDARDMODE)
-	#define _ESP8266_STANDARDMODE	//force!
-#endif
-#if !defined (TFT_ILI9163C_INSTANCES)
-/* GAMMA SET DEFINITIONS ----------------------------------------------------------*/
-	#if (TFT_ILI9163C_GAMMASET == 1)
-		static const uint8_t pGammaSet[15]= {0x36,0x29,0x12,0x22,0x1C,0x15,0x42,0xB7,0x2F,0x13,0x12,0x0A,0x11,0x0B,0x06};
-		static const uint8_t nGammaSet[15]= {0x09,0x16,0x2D,0x0D,0x13,0x15,0x40,0x48,0x53,0x0C,0x1D,0x25,0x2E,0x34,0x39};
-	#elif (TFT_ILI9163C_GAMMASET == 2)
-		static const uint8_t pGammaSet[15]= {0x3F,0x21,0x12,0x22,0x1C,0x15,0x42,0xB7,0x2F,0x13,0x02,0x0A,0x01,0x00,0x00};
-		static const uint8_t nGammaSet[15]= {0x09,0x18,0x2D,0x0D,0x13,0x15,0x40,0x48,0x53,0x0C,0x1D,0x25,0x2E,0x24,0x29};
-	#elif (TFT_ILI9163C_GAMMASET == 3)
-		static const uint8_t pGammaSet[15]= {0x3F,0x26,0x23,0x30,0x28,0x10,0x55,0xB7,0x40,0x19,0x10,0x1E,0x02,0x01,0x00};
-		static const uint8_t nGammaSet[15]= {0x09,0x18,0x2D,0x0D,0x13,0x15,0x40,0x48,0x53,0x0C,0x1D,0x25,0x2E,0x24,0x29};
-	#elif (TFT_ILI9163C_GAMMASET == 4)
-		static const uint8_t pGammaSet[15]= {0x3F,0x25,0x1C,0x1E,0x20,0x12,0x2A,0x90,0x24,0x11,0x00,0x00,0x00,0x00,0x00};
-		static const uint8_t nGammaSet[15]= {0x20,0x20,0x20,0x20,0x05,0x15,0x00,0xA7,0x3D,0x18,0x25,0x2A,0x2B,0x2B,0x3A};
-	#endif
-	static const uint16_t TFT_ILI9163C_CGRAM	=		TFT_ILI9163C_CGR_W * TFT_ILI9163C_H;//CGRAM size
-#else
-		static const uint8_t pGammaSet[4][15]= {
-			{0x36,0x29,0x12,0x22,0x1C,0x15,0x42,0xB7,0x2F,0x13,0x12,0x0A,0x11,0x0B,0x06},
-			{0x3F,0x21,0x12,0x22,0x1C,0x15,0x42,0xB7,0x2F,0x13,0x02,0x0A,0x01,0x00,0x00},
-			{0x3F,0x26,0x23,0x30,0x28,0x10,0x55,0xB7,0x40,0x19,0x10,0x1E,0x02,0x01,0x00},
-			{0x3F,0x25,0x1C,0x1E,0x20,0x12,0x2A,0x90,0x24,0x11,0x00,0x00,0x00,0x00,0x00}
-		};
-		static const uint8_t nGammaSet[4][15]= {
-			{0x09,0x16,0x2D,0x0D,0x13,0x15,0x40,0x48,0x53,0x0C,0x1D,0x25,0x2E,0x34,0x39},
-			{0x09,0x18,0x2D,0x0D,0x13,0x15,0x40,0x48,0x53,0x0C,0x1D,0x25,0x2E,0x24,0x29},
-			{0x09,0x18,0x2D,0x0D,0x13,0x15,0x40,0x48,0x53,0x0C,0x1D,0x25,0x2E,0x24,0x29},
-			{0x20,0x20,0x20,0x20,0x05,0x15,0x00,0xA7,0x3D,0x18,0x25,0x2A,0x2B,0x2B,0x3A}
-		};
-#endif
-/*---------------------------------------------------------------------------------*/
 
+
+//DID YOU HAVE A RED PCB, BLACk PCB or WHAT DISPLAY TYPE???????????? 
+//  ---> SELECT HERE <----
+#define __144_RED_PCB__//128x128
+//#define __144_BLACK_PCB__//128x128
+//#define __22_RED_PCB__//240x320
+//---------------------------------------
+
+
+#if defined(__144_RED_PCB__)
+/*
+This display:
+http://www.ebay.com/itm/Replace-Nokia-5110-LCD-1-44-Red-Serial-128X128-SPI-Color-TFT-LCD-Display-Module-/271422122271
+This particular display has a design error! The controller has 3 pins to configure to constrain
+the memory and resolution to a fixed dimension (in that case 128x128) but they leaved those pins
+configured for 128x160 so there was several pixel memory addressing problems.
+I solved by setup several parameters that dinamically fix the resolution as needed so below
+the parameters for this diplay. If you have a strain or a correct display (can happen with chinese)
+you can copy those parameters and create setup for different displays.
+*/
+	#define _TFTWIDTH  		128//the REAL W resolution of the TFT
+	#define _TFTHEIGHT 		128//the REAL H resolution of the TFT
+	#define _GRAMWIDTH      128
+	#define _GRAMHEIGH      160//160
+	#define _GRAMSIZE		_GRAMWIDTH * _GRAMHEIGH//*see note 1
+	#define __COLORSPC		1// 1:GBR - 0:RGB
+	#define __GAMMASET3		//uncomment for another gamma
+	#define __OFFSET		32//*see note 2
+	//Tested!
+#elif defined (__144_BLACK_PCB__)
+	#define _TFTWIDTH  		128//the REAL W resolution of the TFT
+	#define _TFTHEIGHT 		128//the REAL H resolution of the TFT
+	#define _GRAMWIDTH      128
+	#define _GRAMHEIGH      128
+	#define _GRAMSIZE		_GRAMWIDTH * _GRAMHEIGH//*see note 1
+	#define __COLORSPC		1// 1:GBR - 0:RGB
+	#define __GAMMASET1		//uncomment for another gamma
+	#define __OFFSET		0
+	//not tested
+#elif defined (__22_RED_PCB__)
+/*
+Like this one:
+http://www.ebay.it/itm/2-2-Serial-SPI-TFT-LCD-Display-Module-240x320-Chip-ILI9340C-PCB-Adapter-SD-Card-/281304733556
+Not tested!
+*/
+	#define _TFTWIDTH  		240//the REAL W resolution of the TFT
+	#define _TFTHEIGHT 		320//the REAL H resolution of the TFT
+	#define _GRAMWIDTH      240
+	#define _GRAMHEIGH      320
+	#define _GRAMSIZE		_GRAMWIDTH * _GRAMHEIGH
+	#define __COLORSPC		1// 1:GBR - 0:RGB
+	#define __GAMMASET1		//uncomment for another gamma
+	#define __OFFSET		0
+#else
+	#define _TFTWIDTH  		128//128
+	#define _TFTHEIGHT 		160//160
+	#define _GRAMWIDTH      128
+	#define _GRAMHEIGH      160
+	#define _GRAMSIZE		_GRAMWIDTH * _GRAMHEIGH
+	#define __COLORSPC		1// 1:GBR - 0:RGB
+	#define __GAMMASET1
+	#define __OFFSET		0
 #endif
+
+	#if defined(__GAMMASET1)
+		const uint8_t pGammaSet[15]= {0x36,0x29,0x12,0x22,0x1C,0x15,0x42,0xB7,0x2F,0x13,0x12,0x0A,0x11,0x0B,0x06};
+		const uint8_t nGammaSet[15]= {0x09,0x16,0x2D,0x0D,0x13,0x15,0x40,0x48,0x53,0x0C,0x1D,0x25,0x2E,0x34,0x39};
+	#elif defined(__GAMMASET2)
+		const uint8_t pGammaSet[15]= {0x3F,0x21,0x12,0x22,0x1C,0x15,0x42,0xB7,0x2F,0x13,0x02,0x0A,0x01,0x00,0x00};
+		const uint8_t nGammaSet[15]= {0x09,0x18,0x2D,0x0D,0x13,0x15,0x40,0x48,0x53,0x0C,0x1D,0x25,0x2E,0x24,0x29};
+	#elif defined(__GAMMASET3)
+		const uint8_t pGammaSet[15]= {0x3F,0x26,0x23,0x30,0x28,0x10,0x55,0xB7,0x40,0x19,0x10,0x1E,0x02,0x01,0x00};
+		const uint8_t nGammaSet[15]= {0x09,0x18,0x2D,0x0D,0x13,0x15,0x40,0x48,0x53,0x0C,0x1D,0x25,0x2E,0x24,0x29};
+	#else
+		const uint8_t pGammaSet[15]= {0x3F,0x25,0x1C,0x1E,0x20,0x12,0x2A,0x90,0x24,0x11,0x00,0x00,0x00,0x00,0x00};
+		const uint8_t nGammaSet[15]= {0x20,0x20,0x20,0x20,0x05,0x15,0x00,0xA7,0x3D,0x18,0x25,0x2A,0x2B,0x2B,0x3A};
+	#endif
+/*
+	Note 1: The __144_RED_PCB__ display has hardware addressing of 128 x 160
+	but the tft resolution it's 128 x 128 so the dram should be set correctly
+	
+	Note 2: This is the offset between image in RAM and TFT. In that case 160 - 128 = 32;
+*/
+#endif
+
+/*
+
+Benchmark                Time (microseconds)
+Screen fill              74698
+Text                     4253
+Text2                    15366
+Lines                    16034
+Horiz/Vert Lines         5028
+Rectangles (outline)     4183
+Rectangles (filled)      91226
+Circles (filled)         14436
+Circles (outline)        14910
+Triangles (outline)      5069
+Triangles (filled)       30717
+Rounded rects (outline)  9910
+Rounded rects (filled)   99550
+Done!
+
+*/

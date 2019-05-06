@@ -3,12 +3,16 @@
 #include <TinyGPS.h>
 
 /* This sample code demonstrates the normal use of a TinyGPS object.
-   It requires the use of SoftwareSerial, and assumes that you have a
-   4800-baud serial GPS device hooked up on pins 4(rx) and 3(tx).
+   It assumes that you have a 4800-baud serial GPS device hooked up
+   to a serial port, or SoftwareSerial on pins 4(rx) and 3(tx).
 */
 
 TinyGPS gps;
-SoftwareSerial ss(4, 3);
+
+// Use one of these to connect your GPS
+// ------------------------------------
+#define gpsPort Serial1
+//SoftwareSerial gpsPort(4, 3);
 
 static void smartdelay(unsigned long ms);
 static void print_float(float val, float invalid, int len, int prec);
@@ -27,13 +31,13 @@ void setup()
   Serial.println("          (deg)     (deg)      Age                      Age  (m)    --- from GPS ----  ---- to London  ----  RX    RX        Fail");
   Serial.println("-------------------------------------------------------------------------------------------------------------------------------------");
 
-  ss.begin(4800);
+  gpsPort.begin(4800);
 }
 
 void loop()
 {
   float flat, flon;
-  unsigned long age, date, time, chars = 0;
+  unsigned long age, chars = 0;
   unsigned short sentences = 0, failed = 0;
   static const double LONDON_LAT = 51.508131, LONDON_LON = -0.128002;
   
@@ -64,23 +68,19 @@ void loop()
 static void smartdelay(unsigned long ms)
 {
   unsigned long start = millis();
-  do 
-  {
-    while (ss.available())
-      gps.encode(ss.read());
+  do {
+    while (gpsPort.available())
+      gps.encode(gpsPort.read());
   } while (millis() - start < ms);
 }
 
 static void print_float(float val, float invalid, int len, int prec)
 {
-  if (val == invalid)
-  {
+  if (val == invalid) {
     while (len-- > 1)
       Serial.print('*');
     Serial.print(' ');
-  }
-  else
-  {
+  } else {
     Serial.print(val, prec);
     int vi = abs((int)val);
     int flen = prec + (val < 0.0 ? 2 : 1); // . and -
@@ -94,15 +94,18 @@ static void print_float(float val, float invalid, int len, int prec)
 static void print_int(unsigned long val, unsigned long invalid, int len)
 {
   char sz[32];
-  if (val == invalid)
+  if (val == invalid) {
     strcpy(sz, "*******");
-  else
+  } else {
     sprintf(sz, "%ld", val);
+  }
   sz[len] = 0;
-  for (int i=strlen(sz); i<len; ++i)
+  for (int i=strlen(sz); i<len; ++i) {
     sz[i] = ' ';
-  if (len > 0) 
+  }
+  if (len > 0) {
     sz[len-1] = ' ';
+  }
   Serial.print(sz);
   smartdelay(0);
 }
@@ -113,10 +116,9 @@ static void print_date(TinyGPS &gps)
   byte month, day, hour, minute, second, hundredths;
   unsigned long age;
   gps.crack_datetime(&year, &month, &day, &hour, &minute, &second, &hundredths, &age);
-  if (age == TinyGPS::GPS_INVALID_AGE)
+  if (age == TinyGPS::GPS_INVALID_AGE) {
     Serial.print("********** ******** ");
-  else
-  {
+  } else {
     char sz[32];
     sprintf(sz, "%02d/%02d/%02d %02d:%02d:%02d ",
         month, day, year, hour, minute, second);
@@ -129,7 +131,8 @@ static void print_date(TinyGPS &gps)
 static void print_str(const char *str, int len)
 {
   int slen = strlen(str);
-  for (int i=0; i<len; ++i)
+  for (int i=0; i<len; ++i) {
     Serial.print(i<slen ? str[i] : ' ');
+  }
   smartdelay(0);
 }

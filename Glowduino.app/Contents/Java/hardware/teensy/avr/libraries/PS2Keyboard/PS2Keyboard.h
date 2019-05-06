@@ -64,6 +64,7 @@
 #define PS2_F11				0
 #define PS2_F12				0
 #define PS2_SCROLL			0
+#define PS2_EURO_SIGN			0
 
 #define PS2_INVERTED_EXCLAMATION	161 // ¡
 #define PS2_CENT_SIGN			162 // ¢
@@ -95,7 +96,7 @@
 #define PS2_FRACTION_ONE_QUARTER	188 // ¼
 #define PS2_FRACTION_ONE_HALF		189 // ½
 #define PS2_FRACTION_THREE_QUARTERS	190 // ¾
-#define PS2_INVERTED_QUESTION MARK	191 // ¿
+#define PS2_INVERTED_QUESTION_MARK	191 // ¿
 #define PS2_A_GRAVE			192 // À
 #define PS2_A_ACUTE			193 // Á
 #define PS2_A_CIRCUMFLEX		194 // Â
@@ -167,7 +168,14 @@
 typedef struct {
 	uint8_t noshift[PS2_KEYMAP_SIZE];
 	uint8_t shift[PS2_KEYMAP_SIZE];
-	uint8_t uses_altgr;
+	unsigned int uses_altgr;
+    /*
+     * "uint8_t uses_altgr;" makes the ESP8266 - NodeMCU modules crash.
+     * So, I replaced it with an int and... It works!
+     * I think it's because of the 32-bit architecture of the ESP8266
+     * and the use of the flash memory to store the keymaps.
+     * Maybe I'm wrong, it remains a hypothesis.
+     */
 	uint8_t altgr[PS2_KEYMAP_SIZE];
 } PS2Keymap_t;
 
@@ -176,6 +184,8 @@ extern const PROGMEM PS2Keymap_t PS2Keymap_US;
 extern const PROGMEM PS2Keymap_t PS2Keymap_German;
 extern const PROGMEM PS2Keymap_t PS2Keymap_French;
 extern const PROGMEM PS2Keymap_t PS2Keymap_Spanish;
+extern const PROGMEM PS2Keymap_t PS2Keymap_Italian;
+extern const PROGMEM PS2Keymap_t PS2Keymap_UK;
 
 
 /**

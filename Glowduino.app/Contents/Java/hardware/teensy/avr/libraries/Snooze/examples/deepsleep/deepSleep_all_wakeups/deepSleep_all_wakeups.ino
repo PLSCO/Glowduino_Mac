@@ -11,7 +11,8 @@ SnoozeCompare compare;
 SnoozeTimer timer;
 SnoozeTouch touch;
 SnoozeAlarm	alarm;
-
+// configures the lc's 5v data buffer (OUTPUT, LOW) for low power
+Snoozelc5vBuffer  lc5vBuffer;
 /***********************************************************
  Teensy 3.6/LC can't use Timer Driver with either Touch or
  Compare Drivers and Touch can't be used with Compare.
@@ -29,8 +30,10 @@ SnoozeBlock config_teensy36(touch, digital, alarm);
 SnoozeBlock config_teensy35(digital, timer, compare);
 #elif defined(__MK20DX256__)
 SnoozeBlock config_teensy32(touch, digital, timer, compare);
+#elif defined(__MK20DX128__)
+SnoozeBlock config_teensy30(touch, digital, timer, compare);
 #elif defined(__MKL26Z64__)
-SnoozeBlock config_teensyLC(digital, timer);
+SnoozeBlock config_teensyLC(digital, timer, lc5vBuffer);
 #endif
 
 void setup() {
@@ -53,27 +56,34 @@ void setup() {
      
      Set RTC alarm wake up in (hours, minutes, seconds).
      ********************************************************/
-    alarm.setAlarm(0, 0, 10);// hour, min, sec
+    alarm.setRtcTimer(0, 0, 10);// hour, min, sec
+    
     /********************************************************
      Set Low Power Timer wake up in milliseconds.
      ********************************************************/
     timer.setTimer(5000);// milliseconds
     
     /********************************************************
-     Values greater or less than threshold will trigger CMP
-     wakeup. Threshold value is in volts (0-3.3v) using a 64
-     tap resistor ladder network at 0.0515625v per tap.
+     In deepSleep the Compare module works by setting the
+     internal 6 bit DAC to a volatge threshold and monitors
+     the pin volatge for a voltage crossing. The internal
+     DAC uses a 64 tap resistor ladder network supplied by
+     VOUT33 at 0.0515625v per tap (VOUT33/64). Thus the
+     possible threshold voltages are 0.0515625*(0-64).
      
-     parameter "type": LOW & FALLING are the same.
-     parameter "type": HIGH & RISING are the same.
+     parameter "type": LOW & FALLING are the same and have no effect.
+     parameter "type": HIGH & RISING are the same and have no effect.
      
-     Teensy 3.x/LC
-     Compare pins: 11,12
+     Teensy 3.x
+     Compare pins: 11,9,4
+     
+     Teensy LC
+     Compare pins: 11
      ********************************************************/
     // trigger at threshold values greater than 1.65v
-    //config.pinMode(11, CMP, HIGH, 1.65);//pin, mode, type, threshold(v)
+    //compare.pinMode(11, HIGH, 1.65);//pin, type, threshold(v)
     // trigger at threshold values less than 1.65v
-    compare.pinMode(11, LOW, 1.65);//pin, mode, type, threshold(v)
+    compare.pinMode(11, LOW, 1.65);//pin, type, threshold(v)
     
     /********************************************************
      Values greater than threshold will trigger TSI wakeup.
@@ -101,6 +111,8 @@ void loop() {
     who = Snooze.deepSleep( config_teensy35 );// return module that woke processor
 #elif defined(__MK20DX256__)
     who = Snooze.deepSleep( config_teensy32 );// return module that woke processor
+#elif defined(__MK20DX128__)
+    who = Snooze.deepSleep( config_teensy30 );// return module that woke processor
 #elif defined(__MKL26Z64__)
     who = Snooze.deepSleep( config_teensyLC );// return module that woke processor
 #endif

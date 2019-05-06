@@ -29,7 +29,7 @@
 */
 
 #include <inttypes.h>
-typedef uint8_t boolean;
+//typedef uint8_t boolean; // conflicts with modern Arduino
 typedef uint8_t byte;
 #include <avr/pgmspace.h>
 
@@ -47,6 +47,8 @@ typedef uint8_t byte;
 #include "ks0108_Teensy.h"     // http://www.pjrc.com/teensy/teensyduino.html
 #elif defined(__AVR_AT90USB646__) || defined(__AVR_AT90USB1286__)
 #include "ks0108_Teensy++.h"   // http://www.pjrc.com/teensy/teensyduino.html
+#elif defined(TEENSYDUINO) && defined(__arm__)
+#error "Sorry, this library does not work on 32 bit Teensy.  Use openGLCD."
 #else
 #include "ks0108_Arduino.h"  // include this for the Arduino or other ATmega168 boards
 #endif
@@ -172,7 +174,7 @@ class ks0108  // shell class for ks0108 glcd code
     // Font Functions
     void SelectFont(const uint8_t* font, uint8_t color=BLACK, FontCallback callback=ReadPgmData); // defualt arguments added, callback now last arg
     int PutChar(char c);
-    void Puts(char* str);
+    void Puts(const char* str);
     void Puts_P(PGM_P str);
 	void PrintNumber(long n);
 	void CursorTo( uint8_t x, uint8_t y); // 0 based coordinates for fixed width fonts (i.e. systemFont5x7)

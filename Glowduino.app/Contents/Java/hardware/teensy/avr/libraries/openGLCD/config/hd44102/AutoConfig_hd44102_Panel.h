@@ -115,11 +115,13 @@
 /*  End of Chip Select Configuration                     */
 /*********************************************************/
 
-/*
- * Define for Backlight Control
- */
-//                    BLpin    on   off
-#define glcd_BLctl glcdPinBL, HIGH, LOW
+/*********************************************************/
+/*   Backlight Active Level Configuration                */
+/*   Defines level on glcdPinBL pin to turn on backlight */
+/*    (may require additional transistor circuitry)      */
+/*********************************************************/
+
+#define glcd_BLactlevel HIGH
 
 /*
  * The following defines are for panel specific low level timing.

@@ -6,7 +6,7 @@
  
    Revisions on version 0.2 and 0.3 by Mark Liebman, 27 Jan 2010
     * extended a bit to support up to four (4) 8 character displays.
- 
+  vim: set ts=4:
    
   Controls an Avago HCMS29xx display. This display has 8 characters, each 5x7 LEDs
    
@@ -30,10 +30,14 @@
 
 */
 
- 
-// ensure this library description is only included once 
+
+// ensure this library description is only included once
 #ifndef LedDisplay_h
-#define LedDisplay_h 
+#define LedDisplay_h
+
+// supports up to four 8 character displays, connected as documented here,
+// under "Multiple Displays" http://playground.arduino.cc/Main/LedDisplay
+#define LEDDISPLAY_MAXCHARS  32
 
 // include types & constants of Wiring core API
 #if ARDUINO >= 100
@@ -42,7 +46,7 @@
 #include "WProgram.h"
 #endif
 
-// Arduino Print library provides print() and println() functionality 
+// Arduino Print library provides print() and println() functionality
 #include "Print.h"
 
 // library interface description
@@ -50,17 +54,17 @@
 class LedDisplay : public Print {
   public:
     // constructor:
-   LedDisplay(uint8_t _dataPin, 
-			  uint8_t _registerSelect, 
-			  uint8_t _clockPin, 
-			  uint8_t _chipEnable, 
-			  uint8_t _resetPin, 
+   LedDisplay(uint8_t _dataPin,
+			  uint8_t _registerSelect,
+			  uint8_t _clockPin,
+			  uint8_t _chipEnable,
+			  uint8_t _resetPin,
 			  uint8_t _displayLength);
-   
+
 
 	// initializer method:
 	void begin();
-	
+
 	void clear();						// clear the display
 	void home();						// set cursor to far left hand position
 	void setCursor(int whichPosition);	// set cursor to any position
@@ -72,39 +76,39 @@ class LedDisplay : public Print {
 	virtual void write(uint8_t b);		// write a character to the display and advance cursor
 #endif
 	using Print::write;
-	
-	void setString(char* _stringToDisplay);		// set the displayString variable
-	char* getString();							// get the displayString
+
+	void setString(const char* _stringToDisplay);	// set the displayString variable
+	const char * getString();						// get the displayString
 	int stringLength();							// get the length of displayString
 
 	void scroll(int direction);			// scroll whatever string is stored in library's displayString variable
-	
+
 	void setBrightness(uint8_t bright);			// set display brightness, 0 - 15
 
 	// Control register setters. for addressing the display directly:
-	void loadControlRegister(int dataByte);
+	void loadControlRegister(uint8_t dataByte);
+	void loadAllControlRegisters(uint8_t dataByte);
 	void loadDotRegister();
-			
+
     int version(void);							// return library version
-	  
+
   private:
   	// Character display setters:
 	void writeCharacter(char whatCharacter, byte whatPosition);	// write a character to a buffer which will
 																// be sent to the display by loadDotRegister()
 
-  	int cursorPos;				// position of the cursor		
-//   	uint8_t dotRegister[40];    // the 320-bit dot register for a single 8 digit LED display
-// 	uint8_t dotRegister[80];    // the pair of 320-bit dot register for two 8 character LED displays
-   	uint8_t dotRegister[160];    // four 320-bit dot registers. 320 for each 8 character LED display 
+	int cursorPos;				// position of the cursor
+	uint8_t dotRegister[LEDDISPLAY_MAXCHARS * 5]; // 5 bytes per character * maxchars
 
 	// Define pins for the LED display:
-	uint8_t  dataPin;         	// connects to the display's data in
-	uint8_t registerSelect;   	// the display's register select pin 
+	uint8_t dataPin;         	// connects to the display's data in
+	uint8_t registerSelect;   	// the display's register select pin
 	uint8_t clockPin;         	// the display's clock pin
 	uint8_t chipEnable;       	// the display's chip enable pin
 	uint8_t resetPin;         	// the display's reset pin
 	uint8_t displayLength;    	// number of bytes needed to pad the string
-	char* displayString;		// string for scrolling
+	char stringBuffer[LEDDISPLAY_MAXCHARS+1];  // buffer to hold initial display string
+	const char * displayString;	// string for scrolling
 };
 
 #endif

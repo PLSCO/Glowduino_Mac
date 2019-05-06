@@ -8,7 +8,7 @@
 #ifndef ArduinoIcon_H
 #define ArduinoIcon_H
 
-static uint8_t ArduinoIcon[] PROGMEM = {
+static const uint8_t ArduinoIcon[] PROGMEM = {
   64, // width
   64, // height
 

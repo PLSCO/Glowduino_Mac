@@ -20,7 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  ************************************************************************************
- *  SnoozeTimer.h
+ *  SnoozeTouch.h
  *  Teensy 3.x/LC
  *
  * Purpose: Touch (TSI) Driver

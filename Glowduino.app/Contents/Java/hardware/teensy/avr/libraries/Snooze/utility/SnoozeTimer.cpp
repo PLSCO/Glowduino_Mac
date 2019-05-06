@@ -5,7 +5,6 @@
  * Purpose: Low Power Timer Driver
  *
  ***********************************************************************************/
-#include "Arduino.h"
 #include "SnoozeTimer.h"
 #include "wake.h"
 /********************************************************************/
@@ -40,7 +39,6 @@ void SnoozeTimer::disableDriver( void ) {
         attachInterruptVector( IRQ_LPTMR, return_lptmr_irq );// return prev interrupt
         __enable_irq( );
     }
-    systick_millis_count += period;
     LPTMR0_PSR = PSR;
     LPTMR0_CMR = CMR;
     LPTMR0_CSR = CSR;
@@ -61,7 +59,7 @@ void SnoozeTimer::enableDriver( void ) {
         NVIC_SET_PRIORITY( IRQ_LPTMR, priority );//set priority to new level
         __disable_irq( );
         return_lptmr_irq = _VectorsRam[IRQ_LPTMR+16];// save prev isr
-        attachInterruptVector( IRQ_LPTMR, isr );
+        attachInterruptVector( IRQ_LPTMR, wakeupIsr );
         __enable_irq( );
     }
     
@@ -80,21 +78,21 @@ void SnoozeTimer::enableDriver( void ) {
     LPTMR0_CMR = period;
     
     /*if ( period <= 50 ) {
-#if defined(KINETISK)
-        OSC_clock_active = true;
-        if ( !( OSC0_CR & OSC_ERCLKEN ) ) {
-            OSC_clock_active = false;
-            OSC0_CR |= OSC_EREFSTEN | OSC_ERCLKEN;
-            while ( ( MCG_S & MCG_S_OSCINIT0 ) == 0 );
-        }
-#endif
-        LPTMR0_PSR = LPTMR_PSR_PCS( LPTMR_OSCERCLK ) | LPTMR_PSR_PRESCALE( 8 );
-        LPTMR0_CMR = (period*31.24);
-        
-    } else {
-        LPTMR0_PSR = LPTMR_PSR_PBYP | LPTMR_PSR_PCS( LPTMR_LPO );//LPO Clock
-        LPTMR0_CMR = period;
-    }*/
+     #if defined(KINETISK)
+     OSC_clock_active = true;
+     if ( !( OSC0_CR & OSC_ERCLKEN ) ) {
+     OSC_clock_active = false;
+     OSC0_CR |= OSC_EREFSTEN | OSC_ERCLKEN;
+     while ( ( MCG_S & MCG_S_OSCINIT0 ) == 0 );
+     }
+     #endif
+     LPTMR0_PSR = LPTMR_PSR_PCS( LPTMR_OSCERCLK ) | LPTMR_PSR_PRESCALE( 8 );
+     LPTMR0_CMR = (period*31.24);
+     
+     } else {
+     LPTMR0_PSR = LPTMR_PSR_PBYP | LPTMR_PSR_PCS( LPTMR_LPO );//LPO Clock
+     LPTMR0_CMR = period;
+     }*/
     
     if ( mode == VLPW || mode == VLPS ) {
         return_isr_enabled = NVIC_IS_ENABLED( IRQ_LPTMR );
@@ -117,6 +115,7 @@ void SnoozeTimer::clearIsrFlags( void ) {
  *******************************************************************************/
 void SnoozeTimer::isr( void ) {
     if ( !( SIM_SCGC5 & SIM_SCGC5_LPTIMER ) ) return;
+    systick_millis_count += lptmrUpdateSystick;
     LPTMR0_CSR = LPTMR_CSR_TCF;
     if ( mode == VLPW || mode == VLPS ) source = 36;
 }

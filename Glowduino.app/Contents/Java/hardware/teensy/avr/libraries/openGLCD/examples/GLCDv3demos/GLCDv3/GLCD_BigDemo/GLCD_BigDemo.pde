@@ -108,7 +108,7 @@ void introScreen(){
 }
 
 
-void showCharacters(char * title, Font_t font) {
+void showCharacters(const char * title, Font_t font) {
   // this displays the desired font
   GLCD.ClearScreen();  
   GLCD.CursorTo(0,0);
@@ -163,7 +163,7 @@ void  textAreaDemox()
   showArea( textAreaBOTTOMRIGHT,"BR");  
 }
 
-void showArea(predefinedArea area, char *description)
+void showArea(predefinedArea area, const char *description)
 {
   GLCD.ClearScreen(); 
   GLCD.DrawBitmap(icon, 0,  0); 

@@ -4,7 +4,7 @@
  *
  * vi:ts=4
  *
- *	Copyright (C) 2009-2014 Bill Perry.
+ *	Copyright (C) 2009-2016 Bill Perry.
  *	 (bperrybap@opensource.billsworld.billandterrie.com)
  *
  *      This file is part of AVRIO.
@@ -64,15 +64,15 @@
  *	In native AVR (non arduino) enviroments, the pin parameter should be
  *	specified using the pin defintions near the end of this header file.
  *	These pin definitions allow directly specifying a specific AVR pin using
- *	a PIN_Pb syntax.
+ *	a AVRPIN_Pb syntax.
  *	where Pb represents a PORT and a pin#.
- *	This means to specify port D bit 3 would be PIN_D3
+ *	This means to specify port D bit 3 would be AVRPIN_D3
  *
  *	For the time being, naked constants can also be used for pins on
  *  AVR ports A-F.
  *	So PORTD pin 3 could also be specified by avr pin 0xd3
  *
- *	Arduino users may use either arduino pin#s, or the raw PIN_Pb style naming.
+ *	Arduino users may use either arduino pin#s, or the raw AVRPIN_Pb style naming.
  *
  *
  *	Primitives:
@@ -191,9 +191,9 @@ typedef uint16_t avrpin_t;	/* This must be uint16_t to support ports larger than
  *	ports a-f.
  *
  *	So for talking to port D pin 2 the avrpin # would be 0xd2
- *	That said, it is recommended to use the PIN_Pb defines,
+ *	That said, it is recommended to use the AVRPIN_Pb defines,
  *	for future compatibility should the encoding change.
- *	so rather than use 0xd2, it is recommended to use PIN_D2
+ *	so rather than use 0xd2, it is recommended to use AVRPIN_D2
  */
 
 #define AVRIO_PIN(avrport, avrbit) ((avrport << 4) | avrbit)
@@ -375,9 +375,9 @@ volatile void *avrportaddr = digitalPinToPortReg(pin);
  *
  *	In non arduino enviroments, this value should be specified using the
  *	pin defintions below. Direct pin values can be specified using a
- *	PIN_Pb definition. This means to speccify port D bit 3 would be PIN_D3
+ *	AVRPIN_Pb definition. This means to speccify port D bit 3 would be AVRPIN_D3
  *
- *	Arduino users may use either arduino pin#s, or the PIN_Pb style naming.
+ *	Arduino users may use either arduino pin#s, or the AVRPIN_Pb style naming.
  *	
  *
  * RETURN VALUE:
@@ -927,9 +927,9 @@ avrio_ReadReg(uint8_t regtyp, uint8_t avrport)
  *
  *	In non arduino enviroments, this value should be specified using the
  *	pin defintions below. Direct pin values can be specified using a
- *	PIN_Pb definition. This means to specify port D bit 3 would be PIN_D3
+ *	AVRPIN_Pb definition. This means to specify port D bit 3 would be AVRPIN_D3
  *
- *	Arduino users may use either arduino pin#s, or the PIN_Pb style naming.
+ *	Arduino users may use either arduino pin#s, or the AVRPIN_Pb style naming.
  *
  *
  * RETURN VALUE:
@@ -1245,9 +1245,9 @@ uint8_t avrport = AVRIO_PIN2AVRPORT(avrpin);
  *
  *	In non arduino enviroments, this value should be specified using the
  *	pin defintions below. Direct pin values can be specified using a
- *	PIN_Pb definition. This means to speccify port D bit 3 would be PIN_D3
+ *	AVRPIN_Pb definition. This means to speccify port D bit 3 would be AVRPIN_D3
  *
- *	Arduino users may use either arduino pin#s, or the PIN_Pb style naming.
+ *	Arduino users may use either arduino pin#s, or the AVRPIN_Pb style naming.
  *	
  *
  *
@@ -1423,9 +1423,9 @@ avrio_Write8Bits(uint8_t regtyp, avrpin_t p0, avrpin_t p1, avrpin_t p2, avrpin_t
  *
  *	In non arduino enviroments, this value should be specified using the
  *	pin defintions below. Direct pin values can be specified using a
- *	PIN_Pb definition. This means to speccify port D bit 3 would be PIN_D3
+ *	AVRPIN_Pb definition. This means to speccify port D bit 3 would be AVRPIN_D3
  *
- *	Arduino users may use either arduino pin#s, or the PIN_Pb style naming.
+ *	Arduino users may use either arduino pin#s, or the AVRPIN_Pb style naming.
  *	
  *
  *
@@ -1587,140 +1587,120 @@ do										\
  * to see how to specify the type of register (PORT, PIN, DDR)
  *
  *	These defines allow specifyng a specific bit on a specific port.
- *	The general format is PIN_Pb
+ *	The general format is AVRPIN_Pb
  *	Where P is a port A-Z
  *	and b is a bit 0-7
  *
- *	So to specify bit 3 on port D use PIN_D3
+ *	So to specify bit 3 on port D use AVRPIN_D3
  */
 
-/*
- * Note: only define these if the teensy core_pins.h file has not
- * already defined them.
- */
+#define AVRPIN_A0	AVRIO_PIN(AVRIO_PORTA, 0)
+#define AVRPIN_A1	AVRIO_PIN(AVRIO_PORTA, 1)
+#define AVRPIN_A2	AVRIO_PIN(AVRIO_PORTA, 2)
+#define AVRPIN_A3	AVRIO_PIN(AVRIO_PORTA, 3)
+#define AVRPIN_A4	AVRIO_PIN(AVRIO_PORTA, 4)
+#define AVRPIN_A5	AVRIO_PIN(AVRIO_PORTA, 5)
+#define AVRPIN_A6	AVRIO_PIN(AVRIO_PORTA, 6)
+#define AVRPIN_A7	AVRIO_PIN(AVRIO_PORTA, 7)
 
-#ifdef CORE_NUM_TOTAL_PINS
-/*
- * If teensy files are defining PIN_Pb defines, then there must
- * also be arduino mapping macros.
- */
+#define AVRPIN_B0	AVRIO_PIN(AVRIO_PORTB, 0)
+#define AVRPIN_B1	AVRIO_PIN(AVRIO_PORTB, 1)
+#define AVRPIN_B2	AVRIO_PIN(AVRIO_PORTB, 2)
+#define AVRPIN_B3	AVRIO_PIN(AVRIO_PORTB, 3)
+#define AVRPIN_B4	AVRIO_PIN(AVRIO_PORTB, 4)
+#define AVRPIN_B5	AVRIO_PIN(AVRIO_PORTB, 5)
+#define AVRPIN_B6	AVRIO_PIN(AVRIO_PORTB, 6)
+#define AVRPIN_B7	AVRIO_PIN(AVRIO_PORTB, 7)
 
-#ifndef digitalPinToPortReg
-#error "AVRIO: Teensy environment is missing Arduino pin mapping macros (Please update Teensy s/w)"
-#endif
+#define AVRPIN_C0	AVRIO_PIN(AVRIO_PORTC, 0)
+#define AVRPIN_C1	AVRIO_PIN(AVRIO_PORTC, 1)
+#define AVRPIN_C2	AVRIO_PIN(AVRIO_PORTC, 2)
+#define AVRPIN_C3	AVRIO_PIN(AVRIO_PORTC, 3)
+#define AVRPIN_C4	AVRIO_PIN(AVRIO_PORTC, 4)
+#define AVRPIN_C5	AVRIO_PIN(AVRIO_PORTC, 5)
+#define AVRPIN_C6	AVRIO_PIN(AVRIO_PORTC, 6)
+#define AVRPIN_C7	AVRIO_PIN(AVRIO_PORTC, 7)
 
-#else
+#define AVRPIN_D0	AVRIO_PIN(AVRIO_PORTD, 0)
+#define AVRPIN_D1	AVRIO_PIN(AVRIO_PORTD, 1)
+#define AVRPIN_D2	AVRIO_PIN(AVRIO_PORTD, 2)
+#define AVRPIN_D3	AVRIO_PIN(AVRIO_PORTD, 3)
+#define AVRPIN_D4	AVRIO_PIN(AVRIO_PORTD, 4)
+#define AVRPIN_D5	AVRIO_PIN(AVRIO_PORTD, 5)
+#define AVRPIN_D6	AVRIO_PIN(AVRIO_PORTD, 6)
+#define AVRPIN_D7	AVRIO_PIN(AVRIO_PORTD, 7)
 
+#define AVRPIN_E0	AVRIO_PIN(AVRIO_PORTE, 0)
+#define AVRPIN_E1	AVRIO_PIN(AVRIO_PORTE, 1)
+#define AVRPIN_E2	AVRIO_PIN(AVRIO_PORTE, 2)
+#define AVRPIN_E3	AVRIO_PIN(AVRIO_PORTE, 3)
+#define AVRPIN_E4	AVRIO_PIN(AVRIO_PORTE, 4)
+#define AVRPIN_E5	AVRIO_PIN(AVRIO_PORTE, 5)
+#define AVRPIN_E6	AVRIO_PIN(AVRIO_PORTE, 6)
+#define AVRPIN_E7	AVRIO_PIN(AVRIO_PORTE, 7)
 
-#define PIN_A0	AVRIO_PIN(AVRIO_PORTA, 0)
-#define PIN_A1	AVRIO_PIN(AVRIO_PORTA, 1)
-#define PIN_A2	AVRIO_PIN(AVRIO_PORTA, 2)
-#define PIN_A3	AVRIO_PIN(AVRIO_PORTA, 3)
-#define PIN_A4	AVRIO_PIN(AVRIO_PORTA, 4)
-#define PIN_A5	AVRIO_PIN(AVRIO_PORTA, 5)
-#define PIN_A6	AVRIO_PIN(AVRIO_PORTA, 6)
-#define PIN_A7	AVRIO_PIN(AVRIO_PORTA, 7)
+#define AVRPIN_F0	AVRIO_PIN(AVRIO_PORTF, 0)
+#define AVRPIN_F1	AVRIO_PIN(AVRIO_PORTF, 1)
+#define AVRPIN_F2	AVRIO_PIN(AVRIO_PORTF, 2)
+#define AVRPIN_F3	AVRIO_PIN(AVRIO_PORTF, 3)
+#define AVRPIN_F4	AVRIO_PIN(AVRIO_PORTF, 4)
+#define AVRPIN_F5	AVRIO_PIN(AVRIO_PORTF, 5)
+#define AVRPIN_F6	AVRIO_PIN(AVRIO_PORTF, 6)
+#define AVRPIN_F7	AVRIO_PIN(AVRIO_PORTF, 7)
 
-#define PIN_B0	AVRIO_PIN(AVRIO_PORTB, 0)
-#define PIN_B1	AVRIO_PIN(AVRIO_PORTB, 1)
-#define PIN_B2	AVRIO_PIN(AVRIO_PORTB, 2)
-#define PIN_B3	AVRIO_PIN(AVRIO_PORTB, 3)
-#define PIN_B4	AVRIO_PIN(AVRIO_PORTB, 4)
-#define PIN_B5	AVRIO_PIN(AVRIO_PORTB, 5)
-#define PIN_B6	AVRIO_PIN(AVRIO_PORTB, 6)
-#define PIN_B7	AVRIO_PIN(AVRIO_PORTB, 7)
+#define AVRPIN_G0	AVRIO_PIN(AVRIO_PORTG, 0)
+#define AVRPIN_G1	AVRIO_PIN(AVRIO_PORTG, 1)
+#define AVRPIN_G2	AVRIO_PIN(AVRIO_PORTG, 2)
+#define AVRPIN_G3	AVRIO_PIN(AVRIO_PORTG, 3)
+#define AVRPIN_G4	AVRIO_PIN(AVRIO_PORTG, 4)
+#define AVRPIN_G5	AVRIO_PIN(AVRIO_PORTG, 5)
+#define AVRPIN_G6	AVRIO_PIN(AVRIO_PORTG, 6)
+#define AVRPIN_G7	AVRIO_PIN(AVRIO_PORTG, 7)
 
-#define PIN_C0	AVRIO_PIN(AVRIO_PORTC, 0)
-#define PIN_C1	AVRIO_PIN(AVRIO_PORTC, 1)
-#define PIN_C2	AVRIO_PIN(AVRIO_PORTC, 2)
-#define PIN_C3	AVRIO_PIN(AVRIO_PORTC, 3)
-#define PIN_C4	AVRIO_PIN(AVRIO_PORTC, 4)
-#define PIN_C5	AVRIO_PIN(AVRIO_PORTC, 5)
-#define PIN_C6	AVRIO_PIN(AVRIO_PORTC, 6)
-#define PIN_C7	AVRIO_PIN(AVRIO_PORTC, 7)
+#define AVRPIN_H0	AVRIO_PIN(AVRIO_PORTH, 0)
+#define AVRPIN_H1	AVRIO_PIN(AVRIO_PORTH, 1)
+#define AVRPIN_H2	AVRIO_PIN(AVRIO_PORTH, 2)
+#define AVRPIN_H3	AVRIO_PIN(AVRIO_PORTH, 3)
+#define AVRPIN_H4	AVRIO_PIN(AVRIO_PORTH, 4)
+#define AVRPIN_H5	AVRIO_PIN(AVRIO_PORTH, 5)
+#define AVRPIN_H6	AVRIO_PIN(AVRIO_PORTH, 6)
+#define AVRPIN_H7	AVRIO_PIN(AVRIO_PORTH, 7)
 
-#define PIN_D0	AVRIO_PIN(AVRIO_PORTD, 0)
-#define PIN_D1	AVRIO_PIN(AVRIO_PORTD, 1)
-#define PIN_D2	AVRIO_PIN(AVRIO_PORTD, 2)
-#define PIN_D3	AVRIO_PIN(AVRIO_PORTD, 3)
-#define PIN_D4	AVRIO_PIN(AVRIO_PORTD, 4)
-#define PIN_D5	AVRIO_PIN(AVRIO_PORTD, 5)
-#define PIN_D6	AVRIO_PIN(AVRIO_PORTD, 6)
-#define PIN_D7	AVRIO_PIN(AVRIO_PORTD, 7)
+#define AVRPIN_I0	AVRIO_PIN(AVRIO_PORTI, 0)
+#define AVRPIN_I1	AVRIO_PIN(AVRIO_PORTI, 1)
+#define AVRPIN_I2	AVRIO_PIN(AVRIO_PORTI, 2)
+#define AVRPIN_I3	AVRIO_PIN(AVRIO_PORTI, 3)
+#define AVRPIN_I4	AVRIO_PIN(AVRIO_PORTI, 4)
+#define AVRPIN_I5	AVRIO_PIN(AVRIO_PORTI, 5)
+#define AVRPIN_I6	AVRIO_PIN(AVRIO_PORTI, 6)
+#define AVRPIN_I7	AVRIO_PIN(AVRIO_PORTI, 7)
 
-#define PIN_E0	AVRIO_PIN(AVRIO_PORTE, 0)
-#define PIN_E1	AVRIO_PIN(AVRIO_PORTE, 1)
-#define PIN_E2	AVRIO_PIN(AVRIO_PORTE, 2)
-#define PIN_E3	AVRIO_PIN(AVRIO_PORTE, 3)
-#define PIN_E4	AVRIO_PIN(AVRIO_PORTE, 4)
-#define PIN_E5	AVRIO_PIN(AVRIO_PORTE, 5)
-#define PIN_E6	AVRIO_PIN(AVRIO_PORTE, 6)
-#define PIN_E7	AVRIO_PIN(AVRIO_PORTE, 7)
+#define AVRPIN_J0	AVRIO_PIN(AVRIO_PORTJ, 0)
+#define AVRPIN_J1	AVRIO_PIN(AVRIO_PORTJ, 1)
+#define AVRPIN_J2	AVRIO_PIN(AVRIO_PORTJ, 2)
+#define AVRPIN_J3	AVRIO_PIN(AVRIO_PORTJ, 3)
+#define AVRPIN_J4	AVRIO_PIN(AVRIO_PORTJ, 4)
+#define AVRPIN_J5	AVRIO_PIN(AVRIO_PORTJ, 5)
+#define AVRPIN_J6	AVRIO_PIN(AVRIO_PORTJ, 6)
+#define AVRPIN_J7	AVRIO_PIN(AVRIO_PORTJ, 7)
 
-#define PIN_F0	AVRIO_PIN(AVRIO_PORTF, 0)
-#define PIN_F1	AVRIO_PIN(AVRIO_PORTF, 1)
-#define PIN_F2	AVRIO_PIN(AVRIO_PORTF, 2)
-#define PIN_F3	AVRIO_PIN(AVRIO_PORTF, 3)
-#define PIN_F4	AVRIO_PIN(AVRIO_PORTF, 4)
-#define PIN_F5	AVRIO_PIN(AVRIO_PORTF, 5)
-#define PIN_F6	AVRIO_PIN(AVRIO_PORTF, 6)
-#define PIN_F7	AVRIO_PIN(AVRIO_PORTF, 7)
+#define AVRPIN_K0	AVRIO_PIN(AVRIO_PORTK, 0)
+#define AVRPIN_K1	AVRIO_PIN(AVRIO_PORTK, 1)
+#define AVRPIN_K2	AVRIO_PIN(AVRIO_PORTK, 2)
+#define AVRPIN_K3	AVRIO_PIN(AVRIO_PORTK, 3)
+#define AVRPIN_K4	AVRIO_PIN(AVRIO_PORTK, 4)
+#define AVRPIN_K5	AVRIO_PIN(AVRIO_PORTK, 5)
+#define AVRPIN_K6	AVRIO_PIN(AVRIO_PORTK, 6)
+#define AVRPIN_K7	AVRIO_PIN(AVRIO_PORTK, 7)
 
-#define PIN_G0	AVRIO_PIN(AVRIO_PORTG, 0)
-#define PIN_G1	AVRIO_PIN(AVRIO_PORTG, 1)
-#define PIN_G2	AVRIO_PIN(AVRIO_PORTG, 2)
-#define PIN_G3	AVRIO_PIN(AVRIO_PORTG, 3)
-#define PIN_G4	AVRIO_PIN(AVRIO_PORTG, 4)
-#define PIN_G5	AVRIO_PIN(AVRIO_PORTG, 5)
-#define PIN_G6	AVRIO_PIN(AVRIO_PORTG, 6)
-#define PIN_G7	AVRIO_PIN(AVRIO_PORTG, 7)
-
-#define PIN_H0	AVRIO_PIN(AVRIO_PORTH, 0)
-#define PIN_H1	AVRIO_PIN(AVRIO_PORTH, 1)
-#define PIN_H2	AVRIO_PIN(AVRIO_PORTH, 2)
-#define PIN_H3	AVRIO_PIN(AVRIO_PORTH, 3)
-#define PIN_H4	AVRIO_PIN(AVRIO_PORTH, 4)
-#define PIN_H5	AVRIO_PIN(AVRIO_PORTH, 5)
-#define PIN_H6	AVRIO_PIN(AVRIO_PORTH, 6)
-#define PIN_H7	AVRIO_PIN(AVRIO_PORTH, 7)
-
-#define PIN_I0	AVRIO_PIN(AVRIO_PORTI, 0)
-#define PIN_I1	AVRIO_PIN(AVRIO_PORTI, 1)
-#define PIN_I2	AVRIO_PIN(AVRIO_PORTI, 2)
-#define PIN_I3	AVRIO_PIN(AVRIO_PORTI, 3)
-#define PIN_I4	AVRIO_PIN(AVRIO_PORTI, 4)
-#define PIN_I5	AVRIO_PIN(AVRIO_PORTI, 5)
-#define PIN_I6	AVRIO_PIN(AVRIO_PORTI, 6)
-#define PIN_I7	AVRIO_PIN(AVRIO_PORTI, 7)
-
-#define PIN_J0	AVRIO_PIN(AVRIO_PORTJ, 0)
-#define PIN_J1	AVRIO_PIN(AVRIO_PORTJ, 1)
-#define PIN_J2	AVRIO_PIN(AVRIO_PORTJ, 2)
-#define PIN_J3	AVRIO_PIN(AVRIO_PORTJ, 3)
-#define PIN_J4	AVRIO_PIN(AVRIO_PORTJ, 4)
-#define PIN_J5	AVRIO_PIN(AVRIO_PORTJ, 5)
-#define PIN_J6	AVRIO_PIN(AVRIO_PORTJ, 6)
-#define PIN_J7	AVRIO_PIN(AVRIO_PORTJ, 7)
-
-#define PIN_K0	AVRIO_PIN(AVRIO_PORTK, 0)
-#define PIN_K1	AVRIO_PIN(AVRIO_PORTK, 1)
-#define PIN_K2	AVRIO_PIN(AVRIO_PORTK, 2)
-#define PIN_K3	AVRIO_PIN(AVRIO_PORTK, 3)
-#define PIN_K4	AVRIO_PIN(AVRIO_PORTK, 4)
-#define PIN_K5	AVRIO_PIN(AVRIO_PORTK, 5)
-#define PIN_K6	AVRIO_PIN(AVRIO_PORTK, 6)
-#define PIN_K7	AVRIO_PIN(AVRIO_PORTK, 7)
-
-#define PIN_L0	AVRIO_PIN(AVRIO_PORTL, 0)
-#define PIN_L1	AVRIO_PIN(AVRIO_PORTL, 1)
-#define PIN_L2	AVRIO_PIN(AVRIO_PORTL, 2)
-#define PIN_L3	AVRIO_PIN(AVRIO_PORTL, 3)
-#define PIN_L4	AVRIO_PIN(AVRIO_PORTL, 4)
-#define PIN_L5	AVRIO_PIN(AVRIO_PORTL, 5)
-#define PIN_L6	AVRIO_PIN(AVRIO_PORTL, 6)
-#define PIN_L7	AVRIO_PIN(AVRIO_PORTL, 7)
-
-#endif // end of teensy core pin check
+#define AVRPIN_L0	AVRIO_PIN(AVRIO_PORTL, 0)
+#define AVRPIN_L1	AVRIO_PIN(AVRIO_PORTL, 1)
+#define AVRPIN_L2	AVRIO_PIN(AVRIO_PORTL, 2)
+#define AVRPIN_L3	AVRIO_PIN(AVRIO_PORTL, 3)
+#define AVRPIN_L4	AVRIO_PIN(AVRIO_PORTL, 4)
+#define AVRPIN_L5	AVRIO_PIN(AVRIO_PORTL, 5)
+#define AVRPIN_L6	AVRIO_PIN(AVRIO_PORTL, 6)
+#define AVRPIN_L7	AVRIO_PIN(AVRIO_PORTL, 7)
 
 #endif
 

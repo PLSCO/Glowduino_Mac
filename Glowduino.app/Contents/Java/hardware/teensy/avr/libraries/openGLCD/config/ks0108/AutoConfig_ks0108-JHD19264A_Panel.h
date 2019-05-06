@@ -177,12 +177,12 @@
 #endif
 
 /*********************************************************/
-/*   Backlight Control Configuration                     */
+/*   Backlight Active Level Configuration                */
+/*   Defines level on glcdPinBL pin to turn on backlight */
 /*    (Requires additional transistor circuitry)         */
 /*********************************************************/
 
-//                    BLpin    on   off
-#define glcd_BLctl glcdPinBL, HIGH, LOW
+#define glcd_BLactlevel HIGH
 
 
 /*

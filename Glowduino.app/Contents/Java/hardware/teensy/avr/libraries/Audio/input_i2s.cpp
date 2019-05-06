@@ -24,10 +24,13 @@
  * THE SOFTWARE.
  */
 
+
+
+#include <Arduino.h>
 #include "input_i2s.h"
 #include "output_i2s.h"
 
-DMAMEM static uint32_t i2s_rx_buffer[AUDIO_BLOCK_SAMPLES];
+static uint32_t i2s_rx_buffer[AUDIO_BLOCK_SAMPLES];
 audio_block_t * AudioInputI2S::block_left = NULL;
 audio_block_t * AudioInputI2S::block_right = NULL;
 uint16_t AudioInputI2S::block_offset = 0;
@@ -45,9 +48,9 @@ void AudioInputI2S::begin(void)
 	// TODO: should we set & clear the I2S_RCSR_SR bit here?
 	AudioOutputI2S::config_i2s();
 
-	CORE_PIN13_CONFIG = PORT_PCR_MUX(4); // pin 13, PTC5, I2S0_RXD0
 #if defined(KINETISK)
-	dma.TCD->SADDR = &I2S0_RDR0;
+	CORE_PIN13_CONFIG = PORT_PCR_MUX(4); // pin 13, PTC5, I2S0_RXD0
+	dma.TCD->SADDR = (void *)((uint32_t)&I2S0_RDR0 + 2);
 	dma.TCD->SOFF = 0;
 	dma.TCD->ATTR = DMA_TCD_ATTR_SSIZE(1) | DMA_TCD_ATTR_DSIZE(1);
 	dma.TCD->NBYTES_MLNO = 2;
@@ -58,14 +61,37 @@ void AudioInputI2S::begin(void)
 	dma.TCD->DLASTSGA = -sizeof(i2s_rx_buffer);
 	dma.TCD->BITER_ELINKNO = sizeof(i2s_rx_buffer) / 2;
 	dma.TCD->CSR = DMA_TCD_CSR_INTHALF | DMA_TCD_CSR_INTMAJOR;
-#endif
 	dma.triggerAtHardwareEvent(DMAMUX_SOURCE_I2S0_RX);
-	update_responsibility = update_setup();
-	dma.enable();
 
 	I2S0_RCSR |= I2S_RCSR_RE | I2S_RCSR_BCE | I2S_RCSR_FRDE | I2S_RCSR_FR;
 	I2S0_TCSR |= I2S_TCSR_TE | I2S_TCSR_BCE; // TX clock enable, because sync'd to TX
+#elif defined(__IMXRT1052__) || defined(__IMXRT1062__)
+
+	CORE_PIN7_CONFIG  = 3;  //1:RX_DATA0
+	IOMUXC_SAI1_RX_DATA0_SELECT_INPUT = 2;
+	
+	dma.TCD->SADDR = (void *)((uint32_t)&I2S1_RDR0+2);
+	dma.TCD->SOFF = 0;
+	dma.TCD->ATTR = DMA_TCD_ATTR_SSIZE(1) | DMA_TCD_ATTR_DSIZE(1);
+	dma.TCD->NBYTES_MLNO = 2;
+	dma.TCD->SLAST = 0;
+	dma.TCD->DADDR = i2s_rx_buffer;
+	dma.TCD->DOFF = 2;
+	dma.TCD->CITER_ELINKNO = sizeof(i2s_rx_buffer) / 2;
+	dma.TCD->DLASTSGA = -sizeof(i2s_rx_buffer);
+	dma.TCD->BITER_ELINKNO = sizeof(i2s_rx_buffer) / 2;
+	dma.TCD->CSR = DMA_TCD_CSR_INTHALF | DMA_TCD_CSR_INTMAJOR;
+	dma.triggerAtHardwareEvent(DMAMUX_SOURCE_SAI1_RX);
+
+	I2S1_RCSR |= I2S_RCSR_RE | I2S_RCSR_BCE | I2S_RCSR_FRDE;
+	I2S1_TCSR |= I2S_TCSR_TE | I2S_TCSR_BCE;
+
+#endif
+
+	update_responsibility = update_setup();
+	dma.enable();
 	dma.attachInterrupt(isr);
+	//pinMode(13, OUTPUT);
 }
 
 void AudioInputI2S::isr(void)
@@ -75,8 +101,8 @@ void AudioInputI2S::isr(void)
 	int16_t *dest_left, *dest_right;
 	audio_block_t *left, *right;
 
-	//digitalWriteFast(3, HIGH);
-#if defined(KINETISK)
+	//digitalWriteFast(13, HIGH);
+#if defined(KINETISK) || defined(__IMXRT1052__) || defined(__IMXRT1062__)
 	daddr = (uint32_t)(dma.TCD->DADDR);
 #endif
 	dma.clearInterrupt();
@@ -101,7 +127,9 @@ void AudioInputI2S::isr(void)
 			dest_left = &(left->data[offset]);
 			dest_right = &(right->data[offset]);
 			AudioInputI2S::block_offset = offset + AUDIO_BLOCK_SAMPLES/2;
+
 			do {
+				//Serial.println(*src);
 				//n = *src++;
 				//*dest_left++ = (int16_t)n;
 				//*dest_right++ = (int16_t)(n >> 16);
@@ -110,7 +138,7 @@ void AudioInputI2S::isr(void)
 			} while (src < end);
 		}
 	}
-	//digitalWriteFast(3, LOW);
+	//digitalWriteFast(13, LOW);
 }
 
 
@@ -179,10 +207,10 @@ void AudioInputI2Sslave::begin(void)
 	//block_right_1st = NULL;
 
 	AudioOutputI2Sslave::config_i2s();
-
-	CORE_PIN13_CONFIG = PORT_PCR_MUX(4); // pin 13, PTC5, I2S0_RXD0
 #if defined(KINETISK)
-	dma.TCD->SADDR = &I2S0_RDR0;
+	CORE_PIN13_CONFIG = PORT_PCR_MUX(4); // pin 13, PTC5, I2S0_RXD0
+
+	dma.TCD->SADDR = (void *)((uint32_t)&I2S0_RDR0 + 2);
 	dma.TCD->SOFF = 0;
 	dma.TCD->ATTR = DMA_TCD_ATTR_SSIZE(1) | DMA_TCD_ATTR_DSIZE(1);
 	dma.TCD->NBYTES_MLNO = 2;
@@ -193,7 +221,7 @@ void AudioInputI2Sslave::begin(void)
 	dma.TCD->DLASTSGA = -sizeof(i2s_rx_buffer);
 	dma.TCD->BITER_ELINKNO = sizeof(i2s_rx_buffer) / 2;
 	dma.TCD->CSR = DMA_TCD_CSR_INTHALF | DMA_TCD_CSR_INTMAJOR;
-#endif
+
 	dma.triggerAtHardwareEvent(DMAMUX_SOURCE_I2S0_RX);
 	update_responsibility = update_setup();
 	dma.enable();
@@ -201,8 +229,7 @@ void AudioInputI2Sslave::begin(void)
 	I2S0_RCSR |= I2S_RCSR_RE | I2S_RCSR_BCE | I2S_RCSR_FRDE | I2S_RCSR_FR;
 	I2S0_TCSR |= I2S_TCSR_TE | I2S_TCSR_BCE; // TX clock enable, because sync'd to TX
 	dma.attachInterrupt(isr);
+#endif	
+
 }
-
-
-
 
